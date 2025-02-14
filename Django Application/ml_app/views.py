@@ -1,67 +1,90 @@
+import os
+import cv2
+import numpy as np
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.core.files.storage import FileSystemStorage
-from .models.detector2 import VideoDeepfakeDetector
-from .models.audio_detector import AudioDeepfakeDetector
-import os
+from django.core.files.storage import default_storage
+from django.conf import settings
+from .models.detector2 import DeepfakeDetector
+
+# Initialize the detector
+detector = DeepfakeDetector()
+
+def convert_to_serializable(obj):
+    """Convert numpy types to Python native types for JSON serialization."""
+    if isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    return obj
 
 @csrf_exempt
 def analyze_video(request):
-    if request.method == 'POST' and request.FILES.get('file'):
-        try:
-            video_file = request.FILES['file']
-            fs = FileSystemStorage()
-            filename = fs.save(f'temp/{video_file.name}', video_file)
-            file_path = fs.path(filename)
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST requests are allowed'}, status=405)
 
-            # Process video and get prediction
-            detector = VideoDeepfakeDetector()
-            prediction, confidence = detector.predict(file_path)
+    try:
+        video_file = request.FILES.get('file')
+        if not video_file:
+            return JsonResponse({'error': 'No video file provided'}, status=400)
 
-            # Clean up
-            fs.delete(filename)
+        # Create temp directory if it doesn't exist
+        temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp')
+        os.makedirs(temp_dir, exist_ok=True)
 
-            return JsonResponse({
-                'result': 'FAKE' if prediction == 1 else 'REAL',
-                'confidence': float(confidence * 100),
-                'filename': video_file.name
-            })
+        # Save the uploaded file temporarily
+        temp_path = os.path.join(temp_dir, video_file.name)
+        with open(temp_path, 'wb+') as destination:
+            for chunk in video_file.chunks():
+                destination.write(chunk)
 
-        except Exception as e:
-            return JsonResponse({
-                'error': str(e)
-            }, status=500)
+        # Process the video
+        cap = cv2.VideoCapture(temp_path)
+        frames = []
+        frame_count = 0
 
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+        # Get total frames for progress calculation
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-@csrf_exempt
-def analyze_audio(request):
-    if request.method == 'POST' and request.FILES.get('file'):
-        try:
-            audio_file = request.FILES['file']
-            fs = FileSystemStorage()
-            filename = fs.save(f'temp/{audio_file.name}', audio_file)
-            file_path = fs.path(filename)
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            frames.append(frame)
+            frame_count += 1
 
-            # Initialize detector and get prediction
-            detector = AudioDeepfakeDetector()
-            result = detector.predict(file_path)
+        cap.release()
 
-            # Clean up
-            fs.delete(filename)
+        # Analyze the video
+        result = detector.analyze_video(frames)
 
-            return JsonResponse({
-                'result': 'FAKE' if result['prediction'] == 1 else 'REAL',
-                'confidence': result['confidence'],
-                'filename': audio_file.name,
-                'waveform_data': result['waveform'],
-                'spectral_features': result['features'],
-                'segments_analyzed': 3  # Fixed 3-second segments
-            })
+        # Clean up
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
 
-        except Exception as e:
-            return JsonResponse({
-                'error': str(e)
-            }, status=500)
+        # Convert numpy types to Python native types
+        response_data = {
+            'result': result['result'],
+            'confidence': float(result['confidence']),
+            'frame_predictions': [
+                [bool(pred), float(conf)] 
+                for pred, conf in result['frame_predictions']
+            ],
+            'faces_detected': [bool(x) for x in result['faces_detected']],
+            'total_frames': int(result['total_frames']),
+            'frames_with_faces': int(result['frames_with_faces']),
+            'filename': video_file.name,
+            'video_url': None
+        }
 
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+        return JsonResponse(response_data)
+
+    except Exception as e:
+        # Clean up on error
+        if 'temp_path' in locals() and os.path.exists(temp_path):
+            os.remove(temp_path)
+        return JsonResponse({'error': str(e)}, status=500)

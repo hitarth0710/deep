@@ -6,20 +6,21 @@ import cv2
 from mtcnn import MTCNN
 from pathlib import Path
 
-class VideoDeepfakeDetector:
-    def __init__(self, model_path='ml_app/models/cnn-model.h5'):  # Updated model name here
+class DeepfakeDetector:
+    def __init__(self):
         print("Initializing Deepfake Detector...")
-        self.model = self.load_model(model_path)
+        self.model = self.load_model()
         self.detector = MTCNN()
         self.target_size = (128, 128)
 
-    def load_model(self, model_path):
+    def load_model(self):
         try:
-            if not os.path.exists(model_path):
+            model_path = Path(__file__).parent / 'cnn_model.h5'
+            if not model_path.exists():
                 raise FileNotFoundError(f"Model file not found at {model_path}")
 
             print(f"Loading model from {model_path}")
-            model = load_model(model_path, compile=False)
+            model = load_model(str(model_path), compile=False)  # Added compile=False
             print("Model loaded successfully")
             return model
             
@@ -96,39 +97,6 @@ class VideoDeepfakeDetector:
             
         except Exception as e:
             print(f"Error predicting frame: {str(e)}")
-            raise
-
-    def extract_frames(self, video_path, max_frames=30):
-        frames = []
-        cap = cv2.VideoCapture(video_path)
-        frame_count = 0
-
-        while frame_count < max_frames:
-            ret, frame = cap.read()
-            if not ret:
-                break
-            frames.append(frame)
-            frame_count += 1
-
-        cap.release()
-        return frames
-
-    def predict(self, video_path):
-        try:
-            # Extract frames from video
-            frames = self.extract_frames(video_path)
-            if not frames:
-                raise Exception("No frames could be extracted from video")
-
-            # Analyze frames
-            result = self.analyze_video(frames)
-            
-            # Return prediction and confidence
-            is_fake = result['result'] == 'FAKE'
-            return int(is_fake), result['confidence'] / 100.0
-
-        except Exception as e:
-            print(f"Error in predict: {str(e)}")
             raise
 
     def analyze_video(self, frames):
