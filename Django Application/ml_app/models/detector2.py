@@ -1,150 +1,67 @@
-import os
+import tensorflow as tf
 import numpy as np
-from tensorflow.keras.preprocessing import image
-from tensorflow.keras.models import load_model
 import cv2
-from mtcnn import MTCNN
-from pathlib import Path
 
-class DeepfakeDetector:
-    def __init__(self):
-        print("Initializing Deepfake Detector...")
-        self.model = self.load_model()
-        self.detector = MTCNN()
-        self.target_size = (128, 128)
+class VideoDeepfakeDetector:
+    def __init__(self, model_path='ml_app/models/video_deepfake_model.h5'):
+        self.model = tf.keras.models.load_model(model_path)
+        self.target_size = (224, 224)  # Standard input size for most models
 
-    def load_model(self):
+    def preprocess_frame(self, frame):
+        """Preprocess a single frame"""
+        # Resize frame
+        frame = cv2.resize(frame, self.target_size)
+        
+        # Convert to RGB if needed
+        if len(frame.shape) == 2:
+            frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
+        elif frame.shape[2] == 4:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2RGB)
+        elif frame.shape[2] == 3:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # Normalize pixel values
+        frame = frame.astype(np.float32) / 255.0
+
+        return frame
+
+    def predict(self, video_path):
+        """Predict if video is real or fake"""
         try:
-            model_path = Path(__file__).parent / 'cnn_model.h5'
-            if not model_path.exists():
-                raise FileNotFoundError(f"Model file not found at {model_path}")
+            # Open video file
+            cap = cv2.VideoCapture(video_path)
+            if not cap.isOpened():
+                raise Exception("Error opening video file")
 
-            print(f"Loading model from {model_path}")
-            model = load_model(str(model_path), compile=False)  # Added compile=False
-            print("Model loaded successfully")
-            return model
-            
-        except Exception as e:
-            print(f"Error loading model: {str(e)}")
-            raise
-
-    def detect_and_crop_face(self, frame):
-        try:
-            # Convert BGR to RGB for MTCNN
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = self.detector.detect_faces(frame_rgb)
-            
-            if results:
-                bounding_box = results[0]['box']
-                x, y, width, height = bounding_box
-                # Add padding to the bounding box
-                padding = int(min(width, height) * 0.1)
-                x = max(0, x - padding)
-                y = max(0, y - padding)
-                width = min(frame.shape[1] - x, width + 2*padding)
-                height = min(frame.shape[0] - y, height + 2*padding)
-                
-                face = frame[y:y+height, x:x+width]
-                face = cv2.resize(face, self.target_size)
-                return face, True
-            else:
-                # If no face is detected, return the resized full frame
-                return cv2.resize(frame, self.target_size), False
-                
-        except Exception as e:
-            print(f"Error detecting face: {str(e)}")
-            return cv2.resize(frame, self.target_size), False
-
-    def preprocess_face(self, face):
-        try:
-            # Convert BGR to RGB
-            face_rgb = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
-            # Convert to array and normalize
-            img_array = image.img_to_array(face_rgb)
-            img_array = np.expand_dims(img_array, axis=0)
-            img_array = img_array / 255.0  # Normalize to [0, 1]
-            return img_array
-            
-        except Exception as e:
-            print(f"Error preprocessing face: {str(e)}")
-            raise
-
-    def predict_frame(self, frame):
-        try:
-            # Detect and crop face
-            face, face_detected = self.detect_and_crop_face(frame)
-            
-            # Preprocess the face
-            processed_face = self.preprocess_face(face)
-            
-            # Get prediction
-            prediction = self.model.predict(processed_face)
-            
-            # Handle different model output formats
-            if isinstance(prediction, list):
-                prediction = prediction[0]
-            elif len(prediction.shape) > 1 and prediction.shape[1] > 1:
-                # If model outputs probabilities for both classes
-                prediction = prediction[0][1]  # Take fake probability
-            else:
-                prediction = prediction[0][0]  # Single output
-            
-            # Get result
-            is_fake = prediction >= 0.5  # Adjust threshold if needed
-            confidence = float(prediction if is_fake else 1 - prediction) * 100
-            
-            return is_fake, confidence, face_detected
-            
-        except Exception as e:
-            print(f"Error predicting frame: {str(e)}")
-            raise
-
-    def analyze_video(self, frames):
-        try:
             predictions = []
-            confidences = []
-            faces_detected = []
-            processed_frames = []
+            frame_count = 0
+            max_frames = 30  # Process first 30 frames
 
-            for i, frame in enumerate(frames):
-                print(f"Analyzing frame {i+1}/{len(frames)}")
-                is_fake, confidence, face_detected = self.predict_frame(frame)
-                
-                predictions.append(is_fake)
-                confidences.append(confidence)
-                faces_detected.append(face_detected)
-                
-                # Only consider frames where a face was detected
-                if face_detected:
-                    processed_frames.append(frame)
+            while frame_count < max_frames:
+                ret, frame = cap.read()
+                if not ret:
+                    break
 
-            # Calculate results only from frames with detected faces
-            if any(faces_detected):
-                valid_predictions = [p for p, d in zip(predictions, faces_detected) if d]
-                valid_confidences = [c for c, d in zip(confidences, faces_detected) if d]
+                # Process frame
+                processed_frame = self.preprocess_frame(frame)
                 
-                fake_ratio = sum(valid_predictions) / len(valid_predictions)
-                avg_confidence = sum(valid_confidences) / len(valid_confidences)
-            else:
-                fake_ratio = 0
-                avg_confidence = 0
+                # Make prediction
+                prediction = self.model.predict(np.expand_dims(processed_frame, axis=0))
+                predictions.append(prediction[0][0])
+                
+                frame_count += 1
 
-            # Final decision based on majority voting
-            is_fake = fake_ratio > 0.5
-            result = {
-                'result': 'FAKE' if is_fake else 'REAL',
-                'confidence': avg_confidence,
-                'frame_predictions': list(zip(predictions, confidences)),
-                'faces_detected': faces_detected,
-                'total_frames': len(frames),
-                'frames_with_faces': sum(faces_detected)
-            }
-            
-            print(f"Analysis complete. Result: {result['result']} with {result['confidence']:.2f}% confidence")
-            print(f"Faces detected in {result['frames_with_faces']}/{result['total_frames']} frames")
-            
-            return result
-            
+            cap.release()
+
+            if not predictions:
+                raise Exception("No frames could be processed")
+
+            # Average predictions
+            final_prediction = np.mean(predictions)
+            predicted_class = int(final_prediction > 0.5)
+            confidence = float(final_prediction if predicted_class else 1 - final_prediction)
+
+            return predicted_class, confidence
+
         except Exception as e:
-            print(f"Error analyzing video: {str(e)}")
-            raise
+            raise Exception(f"Prediction error: {str(e)}")
