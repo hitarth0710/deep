@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
-import { useCallback } from "react";
-import { useDropzone } from "react-dropzone";
+import { FileUploadZone } from "@/components/upload/FileUploadZone";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -21,22 +20,6 @@ function AudioDetection() {
     result?: "REAL" | "FAKE";
     confidence?: number;
   }>(null);
-
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      setFile(file);
-    }
-  }, []);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      "audio/*": [".mp3", ".wav", ".m4a"],
-    },
-    maxSize: 50 * 1024 * 1024, // 50MB
-    multiple: false,
-  });
 
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -86,29 +69,13 @@ function AudioDetection() {
         <div className="space-y-6">
           {/* Upload Section */}
           <Card className="p-8">
-            <div
-              {...getRootProps()}
-              className={`
-                border-2 border-dashed rounded-lg p-12
-                flex flex-col items-center justify-center
-                cursor-pointer transition-colors
-                ${isDragActive ? "border-primary bg-primary/5" : "border-gray-200"}
-              `}
-            >
-              <input {...getInputProps()} />
-              <Upload className="h-10 w-10 text-gray-400 mb-4" />
-              <p className="text-lg font-medium text-gray-900 mb-1">
-                {file ? file.name : "Drag & drop your audio file here"}
-              </p>
-              <p className="text-gray-500 mb-4">or</p>
-              <Button variant="outline" className="mb-4">
-                Select Audio
-              </Button>
-              <div className="text-center text-sm text-gray-500">
-                <p>Supported formats: MP3, WAV, M4A</p>
-                <p>Maximum file size: 50MB</p>
-              </div>
-            </div>
+            <FileUploadZone
+              acceptedTypes={["audio"]}
+              onFileSelect={setFile}
+              uploading={analyzing}
+              progress={progress}
+              maxSize={50 * 1024 * 1024} // 50MB
+            />
 
             {file && !analyzing && !result && (
               <div className="mt-6 flex justify-center">

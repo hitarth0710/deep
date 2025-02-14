@@ -54,7 +54,6 @@ export const api = {
       return {
         result: data.result as "REAL" | "FAKE",
         confidence: parseFloat(data.confidence.toFixed(2)),
-        audio_url: data.audio_url,
         filename: data.filename,
         waveform_data: data.waveform_data,
         spectral_features: data.spectral_features,
