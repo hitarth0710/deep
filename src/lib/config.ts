@@ -3,5 +3,6 @@ export const config = {
   endpoints: {
     video: "http://127.0.0.1:8000/ml_app/api/analyze/",
     audio: "http://127.0.0.1:8000/ml_app/api/analyze-audio/",
+    image: "http://127.0.0.1:8000/ml_app/api/analyze-image/",
   },
 };

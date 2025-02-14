@@ -1,3 +1,4 @@
+import axios from "axios";
 import { config } from "./config";
 
 export const api = {
@@ -6,16 +7,21 @@ export const api = {
     formData.append("file", file);
 
     try {
-      const response = await fetch(config.endpoints.video, {
-        method: "POST",
-        body: formData,
+      const response = await axios.post(config.endpoints.video, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+          if (onProgress && progressEvent.total) {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total,
+            );
+            onProgress(percentCompleted);
+          }
+        },
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Analysis failed");
-      }
+      const data = response.data;
 
       return {
         result: data.result as "REAL" | "FAKE",
@@ -40,16 +46,21 @@ export const api = {
     formData.append("file", file);
 
     try {
-      const response = await fetch(config.endpoints.audio, {
-        method: "POST",
-        body: formData,
+      const response = await axios.post(config.endpoints.audio, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+          if (onProgress && progressEvent.total) {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total,
+            );
+            onProgress(percentCompleted);
+          }
+        },
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Analysis failed");
-      }
+      const data = response.data;
 
       return {
         result: data.result as "REAL" | "FAKE",
