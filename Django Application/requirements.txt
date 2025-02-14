@@ -1,0 +1,10 @@
+django==3.2.16
+django-cors-headers==4.3.1
+tensorflow==2.6.0
+opencv-python==4.5.5.64
+numpy==1.19.5
+Pillow==8.4.0
+h5py==3.1.0
+protobuf==3.20.0
+mtcnn==0.1.1
+keras==2.6.0
