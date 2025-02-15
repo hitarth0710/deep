@@ -26,6 +26,13 @@ export default function Navbar() {
         <div className="flex items-center gap-8">
           <DocumentationDialog />
           <PricingDialog />
+          <Button
+            variant="ghost"
+            className="text-[#ff6b00] hover:text-[#ff6b00]/80 hover:bg-transparent"
+            onClick={() => navigate("/memes")}
+          >
+            Memes
+          </Button>
 
           {user ? (
             <>

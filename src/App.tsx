@@ -8,6 +8,7 @@ import Dashboard from "./components/dashboard";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import routes from "tempo-routes";
+import Memes from "./components/memes";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         {/* Detection Routes */}
         <Route path="/video-detection" element={<VideoDetection />} />
         <Route path="/image-detection" element={<ImageDetection />} />
+        <Route path="/memes" element={<Memes />} />
 
         {/* Protected Routes */}
         <Route

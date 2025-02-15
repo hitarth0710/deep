@@ -57,7 +57,7 @@ export default function Dashboard() {
             Manage your content analysis and access our AI tools
           </p>
 
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
+          <div className="grid md:grid-cols-2 gap-12 max-w-3xl mx-auto mb-12">
             {features.map((feature) => (
               <Card
                 key={feature.title}

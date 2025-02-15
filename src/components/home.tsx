@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { LoadingScreen } from "./loading/LoadingScreen";
 
 import { useEffect, useState } from "react";
 import { Layout } from "./layout";
@@ -66,6 +67,7 @@ const teamMembers = [
 ];
 
 export default function Home() {
+  const [showLoading, setShowLoading] = useState(false);
   const { scrollY } = useScroll();
   const [scrollPosition, setScrollPosition] = useState(0);
 
@@ -109,6 +111,7 @@ export default function Home() {
 
   return (
     <>
+      {showLoading && <LoadingScreen />}
       <SplashScreen />
       <Layout>
         {/* Hero Section */}
@@ -145,7 +148,7 @@ export default function Home() {
                   <Button
                     size="lg"
                     className="group fixed bottom-8 right-8 z-50 shadow-lg hover:shadow-xl transition-all duration-200 bg-primary/90 hover:bg-primary backdrop-blur-sm"
-                    onClick={() => navigate("/video-detection")}
+                    onClick={() => setShowLoading(true)}
                   >
                     Get Started
                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
