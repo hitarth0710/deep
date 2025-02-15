@@ -1,6 +1,7 @@
 import React, { useCallback, useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { Upload, FileAudio, FileText, FileVideo, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -124,22 +125,34 @@ export function FileUploadZone({
       )}
     >
       <input {...getInputProps()} />
-      <div className="flex flex-col items-center text-center space-y-4">
+      <div className="flex flex-col items-center text-center space-y-4 relative z-10">
         {preview && (
-          <div className="w-full max-w-md aspect-video rounded-lg overflow-hidden bg-black/20 mb-4">
-            {preview.type === "video" ? (
-              <video
-                src={preview.url}
-                className="w-full h-full object-contain"
-                controls
-              />
-            ) : (
-              <img
-                src={preview.url}
-                alt="Preview"
-                className="w-full h-full object-contain"
-              />
-            )}
+          <div className="relative w-full max-w-2xl mx-auto mb-8 group">
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#ff6b00] to-[#ff9d00] blur-xl opacity-50 group-hover:opacity-75 transition-opacity animate-pulse" />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="relative aspect-video rounded-xl overflow-hidden border-2 border-[#ff6b00] shadow-2xl shadow-[#ff6b00]/20 bg-black/50 backdrop-blur-sm"
+            >
+              {preview.type === "video" ? (
+                <video
+                  src={preview.url}
+                  className="w-full h-full object-contain"
+                  controls
+                />
+              ) : (
+                <div className="relative w-full h-full flex items-center justify-center p-4">
+                  <img
+                    src={preview.url}
+                    alt="Preview"
+                    className="max-w-full max-h-full object-contain rounded-lg"
+                  />
+                </div>
+              )}
+              <div className="absolute inset-0 ring-1 ring-[#ff6b00]/30 rounded-xl" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-50" />
+            </motion.div>
           </div>
         )}
         <Upload className="h-6 w-6 text-muted-foreground" />
