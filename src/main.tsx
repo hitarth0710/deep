@@ -6,9 +6,14 @@ import { BrowserRouter } from "react-router-dom";
 import { TempoDevtools } from "tempo-devtools";
 
 // Initialize Tempo
-TempoDevtools.init();
+if (import.meta.env.VITE_TEMPO === "true") {
+  TempoDevtools.init();
+}
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+const rootElement = document.getElementById("root");
+if (!rootElement) throw new Error("Root element not found");
+
+ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <BrowserRouter>
       <App />
