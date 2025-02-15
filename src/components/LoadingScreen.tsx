@@ -22,15 +22,15 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
   const [currentLine, setCurrentLine] = useState(0);
 
   useEffect(() => {
-    // Change line every 1 second
+    // Change line every 2.5 seconds to give more reading time
     const lineInterval = setInterval(() => {
       setCurrentLine((prev) => (prev + 1) % wittyLines.length);
-    }, 1000);
+    }, 2500);
 
-    // Complete after 5 seconds
+    // Complete after 10 seconds
     const timer = setTimeout(() => {
       onComplete();
-    }, 5000);
+    }, 10000);
 
     return () => {
       clearInterval(lineInterval);
@@ -86,7 +86,7 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
             className="h-full bg-primary"
             initial={{ width: "0%" }}
             animate={{ width: "100%" }}
-            transition={{ duration: 5, ease: "linear" }}
+            transition={{ duration: 10, ease: "linear" }}
           />
         </motion.div>
       </div>
