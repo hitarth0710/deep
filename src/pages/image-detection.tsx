@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { FileUploadZone } from "@/components/upload/FileUploadZone";
@@ -27,15 +27,6 @@ export default function ImageDetection() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  // Create preview URL when file is selected
-  useEffect(() => {
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-      return () => URL.revokeObjectURL(url);
-    }
-  }, [file]);
 
   const handleAnalyze = async () => {
     if (!user) {
@@ -80,6 +71,17 @@ export default function ImageDetection() {
     }
   };
 
+  const handleReset = () => {
+    setFile(null);
+    setResult(null);
+    setAnalyzing(false);
+    setProgress(0);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -95,28 +97,48 @@ export default function ImageDetection() {
         <div className="space-y-6">
           {/* Upload Section */}
           <Card className="p-8">
-            <FileUploadZone
-              acceptedTypes={["image"]}
-              onFileSelect={setFile}
-              uploading={analyzing}
-              progress={progress}
-              maxSize={20 * 1024 * 1024} // 20MB
-            />
-
-            {file && !analyzing && !result && (
-              <div className="mt-6 flex justify-center">
-                <Button onClick={handleAnalyze} size="lg">
-                  {analyzing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    "Start Analysis"
-                  )}
+            <div className="relative">
+              {file && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute top-2 right-2 z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.location.reload();
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4"
+                  >
+                    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.85.99 6.57 2.57" />
+                    <path d="M21 3v9h-9" />
+                  </svg>
                 </Button>
-              </div>
-            )}
+              )}
+              <FileUploadZone
+                acceptedTypes={["image"]}
+                onFileSelect={setFile}
+                uploading={analyzing}
+                progress={progress}
+                maxSize={20 * 1024 * 1024} // 20MB
+              />
+
+              {file && !analyzing && !result && (
+                <div className="mt-6 flex justify-center">
+                  <Button onClick={handleAnalyze} size="lg">
+                    Start Analysis
+                  </Button>
+                </div>
+              )}
+            </div>
           </Card>
 
           {/* Analysis Progress */}
@@ -136,20 +158,6 @@ export default function ImageDetection() {
           {/* Results */}
           {result && (
             <div className="space-y-6">
-              {/* Image Preview */}
-              {previewUrl && (
-                <Card className="p-4">
-                  <div className="aspect-video relative rounded-lg overflow-hidden bg-black">
-                    <img
-                      src={previewUrl}
-                      alt="Analyzed image"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                </Card>
-              )}
-
-              {/* Analysis Results */}
               <Card className="p-6">
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">

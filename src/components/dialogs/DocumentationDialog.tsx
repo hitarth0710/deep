@@ -1,3 +1,15 @@
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  BookOpen,
+  Code,
+  FileText,
+  FileType,
+  Wand2,
+  Zap,
+  Shield,
+  CheckCircle,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -6,9 +18,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Code, FileText, FileType } from "lucide-react";
 
 export function DocumentationDialog() {
   return (
@@ -22,85 +31,178 @@ export function DocumentationDialog() {
           Documentation
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-gradient-to-br from-background to-muted">
         <DialogHeader>
-          <DialogTitle>Documentation</DialogTitle>
-          <DialogDescription>
-            Learn how to integrate and use MaskOff's powerful video analysis and
-            transformation tools.
+          <DialogTitle className="flex items-center gap-2 text-2xl">
+            <BookOpen className="h-6 w-6 text-primary" />
+            The "How Not to Get Fooled" Guide 🕵️‍♂️
+          </DialogTitle>
+          <DialogDescription className="text-lg">
+            Because in 2024, even your cat's photos could be AI-generated! 🐱
           </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="quickstart" className="mt-6">
           <TabsList className="w-full justify-start">
             <TabsTrigger value="quickstart">
-              <BookOpen className="h-4 w-4 mr-2" />
-              Quickstart
+              <Zap className="h-4 w-4 mr-2" />
+              Quick Start
+            </TabsTrigger>
+            <TabsTrigger value="features">
+              <Shield className="h-4 w-4 mr-2" />
+              Features
             </TabsTrigger>
             <TabsTrigger value="api">
               <Code className="h-4 w-4 mr-2" />
-              API Reference
+              API Magic
             </TabsTrigger>
             <TabsTrigger value="guides">
-              <FileText className="h-4 w-4 mr-2" />
+              <Wand2 className="h-4 w-4 mr-2" />
               Guides
-            </TabsTrigger>
-            <TabsTrigger value="presentations">
-              <FileType className="h-4 w-4 mr-2" />
-              Presentations
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="quickstart" className="space-y-4 mt-4">
             <div className="prose prose-sm max-w-none">
-              <h3 className="text-lg font-semibold">Getting Started</h3>
-              <p>Follow these steps to start using MaskOff in your project:</p>
-              <ol className="list-decimal pl-4 space-y-2">
-                <li>Sign up for an account</li>
-                <li>Get your API key from the dashboard</li>
-                <li>Install our SDK</li>
-                <li>Make your first API call</li>
-              </ol>
-              <Button className="mt-4">View Installation Guide</Button>
+              <h3 className="text-xl font-semibold mb-4">
+                Getting Started (It's easier than explaining why you're still
+                single)
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="bg-primary/10 p-2 rounded-lg">
+                    <Shield className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-1">
+                      Step 1: Sign Up (No blood sacrifice required)
+                    </h4>
+                    <p className="text-muted-foreground">
+                      Just your regular email will do. We promise not to send
+                      you cat videos... unless you want them.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="bg-primary/10 p-2 rounded-lg">
+                    <Wand2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-1">Step 2: Upload Media</h4>
+                    <p className="text-muted-foreground">
+                      Drag and drop like it's hot! We accept videos, images, and
+                      your trust issues.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="bg-primary/10 p-2 rounded-lg">
+                    <Zap className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-1">
+                      Step 3: Let AI Do Its Thing
+                    </h4>
+                    <p className="text-muted-foreground">
+                      Our AI is like your mom - it can spot fakeness from a mile
+                      away!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="features" className="space-y-4 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 border rounded-lg hover:bg-[#ff6b00] transition-colors group">
+                <h3 className="font-semibold mb-2 group-hover:text-black">
+                  🔍 Deep Analysis
+                </h3>
+                <p className="text-sm text-muted-foreground group-hover:text-black">
+                  More thorough than your ex's social media stalking
+                </p>
+              </div>
+              <div className="p-4 border rounded-lg hover:bg-[#ff6b00] transition-colors group">
+                <h3 className="font-semibold mb-2 group-hover:text-black">
+                  ⚡ Lightning Fast
+                </h3>
+                <p className="text-sm text-muted-foreground group-hover:text-black">
+                  Faster than your friend's excuse for canceling plans
+                </p>
+              </div>
+              <div className="p-4 border rounded-lg hover:bg-[#ff6b00] transition-colors group">
+                <h3 className="font-semibold mb-2 group-hover:text-black">
+                  🎯 High Accuracy
+                </h3>
+                <p className="text-sm text-muted-foreground group-hover:text-black">
+                  More accurate than your weather app
+                </p>
+              </div>
+              <div className="p-4 border rounded-lg hover:bg-[#ff6b00] transition-colors group">
+                <h3 className="font-semibold mb-2 group-hover:text-black">
+                  🔒 Privacy First
+                </h3>
+                <p className="text-sm text-muted-foreground group-hover:text-black">
+                  We keep secrets better than your best friend
+                </p>
+              </div>
             </div>
           </TabsContent>
 
           <TabsContent value="api" className="space-y-4 mt-4">
             <div className="prose prose-sm max-w-none">
-              <h3 className="text-lg font-semibold">API Reference</h3>
-              <p>Explore our comprehensive API documentation:</p>
-              <ul className="list-disc pl-4 space-y-2">
-                <li>Authentication</li>
-                <li>Video Analysis API</li>
-                <li>Video Transformation API</li>
-                <li>Webhooks</li>
-              </ul>
+              <h3 className="text-xl font-semibold mb-4">
+                API Documentation (The Fun Part! 🎉)
+              </h3>
+              <div className="bg-black/90 p-4 rounded-lg font-mono text-sm text-primary">
+                <p>// Detecting deepfakes is as easy as:</p>
+                <p>const truth = await maskoff.analyze(suspiciousContent);</p>
+                <p>if (truth.isFake) {"{"};</p>
+                <p> console.log("Nice try, AI!");</p>
+                <p>{"}"};</p>
+              </div>
+              <p className="text-muted-foreground mt-4">
+                Check out our full API docs - they're more entertaining than
+                your favorite Netflix show!
+              </p>
             </div>
           </TabsContent>
 
           <TabsContent value="guides" className="space-y-4 mt-4">
-            <div className="prose prose-sm max-w-none">
-              <h3 className="text-lg font-semibold">Guides & Tutorials</h3>
-              <p>Learn how to implement specific features:</p>
-              <ul className="list-disc pl-4 space-y-2">
-                <li>Deepfake Detection Guide</li>
-                <li>Video Style Transfer Tutorial</li>
-                <li>Batch Processing Guide</li>
-                <li>Error Handling Best Practices</li>
-              </ul>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="presentations" className="space-y-4 mt-4">
             <div className="grid gap-4">
-              <div className="p-4 border rounded-lg hover:bg-accent">
-                <h3 className="text-lg font-semibold mb-2">Project Overview</h3>
-                <p className="text-muted-foreground text-sm mb-4">
-                  Complete overview of the MaskOff project and its features
+              <div className="p-4 border rounded-lg hover:bg-[#ff6b00] transition-colors group">
+                <h3 className="text-lg font-semibold mb-2 group-hover:text-black">
+                  🎓 Deepfake Detection 101
+                </h3>
+                <p className="text-muted-foreground mb-4 group-hover:text-black">
+                  A guide so simple, even your grandma could use it
                 </p>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="group-hover:border-black group-hover:text-black"
+                >
                   <FileType className="h-4 w-4 mr-2" />
-                  View Presentation
+                  Read Guide
+                </Button>
+              </div>
+              <div className="p-4 border rounded-lg hover:bg-[#ff6b00] transition-colors group">
+                <h3 className="text-lg font-semibold mb-2 group-hover:text-black">
+                  🚀 Advanced Techniques
+                </h3>
+                <p className="text-muted-foreground mb-4 group-hover:text-black">
+                  For when you're ready to become a deepfake-detecting ninja
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="group-hover:border-black group-hover:text-black"
+                >
+                  <FileType className="h-4 w-4 mr-2" />
+                  Level Up
                 </Button>
               </div>
             </div>

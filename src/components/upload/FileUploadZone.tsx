@@ -1,11 +1,32 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { Upload, FileAudio, FileText, FileVideo, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type FileType = "video" | "audio" | "text";
+const loadingMessages = [
+  "Analyzing... Our AI is Giving This a Side-Eye 🧐",
+  "AI is Thinking... Just Like You Did Before Trusting That Video 🤔",
+  "Deep Learning in Progress... Like Really Deep 🕵️‍♂️",
+  "Teaching Robots to Spot Fakes... They're Quick Learners! 🤖",
+  "Running Advanced Analysis... No Pressure! 🔍",
+];
+
+const subLoadingMessages = [
+  "Checking pixel by pixel... trust issues are our specialty",
+  "Training our AI to be more skeptical than your mom",
+  "Making sure this content is as real as your excuses",
+  "Analyzing harder than a detective with a magnifying glass",
+  "Our AI is doing its homework, unlike some people we know",
+];
+
+type FileType = "video" | "audio" | "text" | "image";
+
+interface FilePreview {
+  url: string;
+  type: "video" | "image";
+}
 
 interface FileUploadZoneProps {
   onFileSelect: (file: File) => void;
@@ -25,6 +46,29 @@ export function FileUploadZone({
   progress = 0,
 }: FileUploadZoneProps) {
   const [dragActive, setDragActive] = useState(false);
+  const [messageIndex, setMessageIndex] = useState(0);
+  const [preview, setPreview] = useState<FilePreview | null>(null);
+
+  useEffect(() => {
+    if (uploading) {
+      const interval = setInterval(() => {
+        setMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [uploading]);
+
+  // Cleanup preview URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (preview?.url) {
+        URL.revokeObjectURL(preview.url);
+      }
+    };
+  }, [preview]);
+
+  const getLoadingMessage = () => loadingMessages[messageIndex];
+  const getSubLoadingMessage = () => subLoadingMessages[messageIndex];
 
   const getAcceptedFiles = useCallback(() => {
     const accepted: Record<string, string[]> = {};
@@ -39,6 +83,9 @@ export function FileUploadZone({
         case "text":
           accepted["text/*"] = [".txt", ".doc", ".docx", ".pdf"];
           break;
+        case "image":
+          accepted["image/*"] = [];
+          break;
       }
     });
     return accepted;
@@ -47,8 +94,20 @@ export function FileUploadZone({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: (acceptedFiles) => {
       if (acceptedFiles?.[0]) {
-        onFileSelect(acceptedFiles[0]);
+        const file = acceptedFiles[0];
+        onFileSelect(file);
+
+        // Create preview URL
+        const url = URL.createObjectURL(file);
+        if (file.type.startsWith("video/")) {
+          setPreview({ url, type: "video" });
+        } else if (file.type.startsWith("image/")) {
+          setPreview({ url, type: "image" });
+        }
       }
+    },
+    onDropRejected: () => {
+      setPreview(null);
     },
     accept: getAcceptedFiles(),
     maxSize,
@@ -66,6 +125,23 @@ export function FileUploadZone({
     >
       <input {...getInputProps()} />
       <div className="flex flex-col items-center text-center space-y-4">
+        {preview && (
+          <div className="w-full max-w-md aspect-video rounded-lg overflow-hidden bg-black/20 mb-4">
+            {preview.type === "video" ? (
+              <video
+                src={preview.url}
+                className="w-full h-full object-contain"
+                controls
+              />
+            ) : (
+              <img
+                src={preview.url}
+                alt="Preview"
+                className="w-full h-full object-contain"
+              />
+            )}
+          </div>
+        )}
         <Upload className="h-6 w-6 text-muted-foreground" />
         <div className="space-y-2">
           <p className="text-lg font-medium">
@@ -79,19 +155,39 @@ export function FileUploadZone({
           </p>
           <p className="text-sm text-muted-foreground">or</p>
           <Button variant="outline" size="sm">
-            Select Video
+            {acceptedTypes.includes("video")
+              ? "Select Video"
+              : acceptedTypes.includes("image")
+                ? "Select Image"
+                : acceptedTypes.includes("audio")
+                  ? "Select Audio"
+                  : "Select File"}
           </Button>
         </div>
         <div className="text-sm text-muted-foreground space-y-1">
-          <p>Supported formats: MP4, WebM, QuickTime</p>
+          <p>
+            Supported formats:{" "}
+            {acceptedTypes.includes("video")
+              ? "MP4, WebM, QuickTime"
+              : acceptedTypes.includes("image")
+                ? "JPG, PNG, GIF"
+                : acceptedTypes.includes("audio")
+                  ? "MP3, WAV, OGG"
+                  : "All Files"}
+          </p>
           <p>Maximum file size: {Math.round(maxSize / 1024 / 1024)}MB</p>
         </div>
         {uploading && (
           <div className="w-full mt-4 space-y-2">
             <Progress value={progress} />
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Processing...</span>
+            <div className="space-y-2 text-center">
+              <div className="flex items-center justify-center gap-2 text-sm text-[#ff6b00]">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>{getLoadingMessage()}</span>
+              </div>
+              <p className="text-xs text-[#ff6b00]/70 italic">
+                {getSubLoadingMessage()}
+              </p>
             </div>
           </div>
         )}

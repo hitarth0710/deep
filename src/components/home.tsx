@@ -169,15 +169,28 @@ export default function Home() {
 
           {/* Features Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto mb-20">
-            {features.map((feature) => (
-              <div
+            {features.map((feature, index) => (
+              <motion.div
                 key={feature.title}
-                className="p-6 rounded-xl border bg-card/50 backdrop-blur-sm"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 30 }}
+                viewport={{ once: false, amount: 0.8 }}
+                transition={{
+                  duration: 0.5,
+                  delay: index * 0.2,
+                  ease: "easeOut",
+                }}
+                className="p-6 rounded-xl border border-[#ff6b00] bg-black hover:bg-[#ff6b00] group transition-all duration-300"
               >
-                <feature.icon className="h-12 w-12 text-primary mb-4" />
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
-              </div>
+                <feature.icon className="h-12 w-12 text-[#ff6b00] group-hover:text-black mb-4 transition-colors" />
+                <h3 className="text-xl font-semibold mb-2 text-[#ff6b00] group-hover:text-black transition-colors">
+                  {feature.title}
+                </h3>
+                <p className="text-[#ff6b00]/70 group-hover:text-black/90 transition-colors">
+                  {feature.description}
+                </p>
+              </motion.div>
             ))}
           </div>
 
@@ -187,18 +200,29 @@ export default function Home() {
               Meet Our Team
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {teamMembers.map((member) => (
-                <div
+              {teamMembers.map((member, index) => (
+                <motion.div
                   key={member.name}
-                  className="p-6 rounded-xl border bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-all duration-200 hover:scale-[1.02] text-center group"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 30 }}
+                  viewport={{ once: false, amount: 0.8 }}
+                  transition={{
+                    duration: 0.5,
+                    delay: index * 0.2,
+                    ease: "easeOut",
+                  }}
+                  className="p-6 rounded-xl border border-[#ff6b00] bg-black backdrop-blur-sm hover:bg-[#ff6b00]/10 transition-all duration-200 hover:scale-[1.02] text-center group"
                 >
-                  <Avatar className="h-24 w-24 mx-auto border-2 border-primary/20 mb-4 group-hover:border-primary transition-colors">
+                  <Avatar className="h-24 w-24 mx-auto border-2 border-[#ff6b00] mb-4 group-hover:border-[#ff6b00] transition-colors">
                     <AvatarImage src={member.avatar} alt={member.name} />
                     <AvatarFallback>{member.name[0]}</AvatarFallback>
                   </Avatar>
                   <div className="space-y-1 mb-4">
-                    <div className="font-semibold text-lg">{member.name}</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="font-semibold text-lg text-[#ff6b00]">
+                      {member.name}
+                    </div>
+                    <div className="text-sm text-[#ff6b00]/70">
                       {member.role}
                     </div>
                   </div>
@@ -209,7 +233,7 @@ export default function Home() {
                         href={url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-muted-foreground hover:text-primary hover:scale-110 transition-all duration-200"
+                        className="text-[#ff6b00]/70 hover:text-[#ff6b00] hover:scale-110 transition-all duration-200"
                       >
                         {platform === "github" && (
                           <Github className="h-5 w-5" />
@@ -223,7 +247,7 @@ export default function Home() {
                       </a>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
