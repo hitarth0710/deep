@@ -2,29 +2,51 @@ import os
 import librosa
 import numpy as np
 import soundfile as sf
+import tensorflow as tf
 from tensorflow.keras.models import load_model
+from tensorflow.keras.models import model_from_json
 
 class AudioDeepfakeDetector:
-    def __init__(self, model_path='ml_app/models/my_model.h5'):
+    def __init__(self, model_dir='ml_app/models'):
         print("Initializing Audio Deepfake Detector...")
         try:
-            self.model = self.load_model(model_path)
+            self.model = self.load_model(model_dir)
             self.target_sr = 16000
-            self.n_mfcc = 128  # Changed to match model's expected input
-            self.max_length = 128  # Changed to match model's expected input
+            self.n_mfcc = 128
+            self.max_length = 128
             print("Audio detector initialized successfully")
         except Exception as e:
             print(f"Error initializing audio detector: {str(e)}")
             raise
 
-    def load_model(self, model_path):
+    def load_model(self, model_dir):
         try:
-            if not os.path.exists(model_path):
-                raise FileNotFoundError(f"Model file not found at {model_path}")
+            # Try loading model architecture from JSON
+            json_path = os.path.join(model_dir, 'model_architecture.json')
+            weights_path = os.path.join(model_dir, 'model_weights.h5')
+            
+            if os.path.exists(json_path) and os.path.exists(weights_path):
+                print("Loading model from JSON and weights...")
+                with open(json_path, 'r') as f:
+                    model_json = f.read()
+                model = model_from_json(model_json)
+                model.load_weights(weights_path)
+            else:
+                # Fallback to direct model loading
+                model_path = os.path.join(model_dir, 'my_model.h5')
+                if not os.path.exists(model_path):
+                    raise FileNotFoundError(f"Model file not found at {model_path}")
+                print(f"Loading model from {model_path}")
+                
+                # Custom load function to handle compatibility issues
+                model = tf.keras.models.load_model(
+                    model_path,
+                    compile=False,
+                    custom_objects=None
+                )
 
-            print(f"Loading model from {model_path}")
-            model = load_model(model_path, compile=False)
             print("Model loaded successfully")
+            print(f"Model input shape: {model.input_shape}")
             return model
 
         except Exception as e:
