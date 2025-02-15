@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { LoadingScreen } from "./LoadingScreen";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Shield,
@@ -66,6 +67,7 @@ const teamMembers = [
 ];
 
 export default function Home() {
+  const [isLoading, setIsLoading] = useState(false);
   const { scrollY } = useScroll();
   const [scrollPosition, setScrollPosition] = useState(0);
 
@@ -141,11 +143,22 @@ export default function Home() {
             <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 rounded-3xl blur-3xl" />
             <div className="relative text-center min-h-[70vh] flex flex-col justify-center items-center">
               <div className="flex flex-wrap justify-center gap-4 mb-16">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="group fixed bottom-8 left-8 z-50 shadow-lg hover:shadow-xl transition-all duration-200 border-primary text-primary hover:bg-primary hover:text-primary-foreground backdrop-blur-sm"
+                  onClick={() => navigate("/team")}
+                >
+                  Contact Us
+                  <Users className="ml-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+                </Button>
                 <AuthCheck>
                   <Button
                     size="lg"
                     className="group fixed bottom-8 right-8 z-50 shadow-lg hover:shadow-xl transition-all duration-200 bg-primary/90 hover:bg-primary backdrop-blur-sm"
-                    onClick={() => navigate("/video-detection")}
+                    onClick={() => {
+                      setIsLoading(true);
+                    }}
                   >
                     Get Started
                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -253,6 +266,14 @@ export default function Home() {
           </div>
         </section>
       </Layout>
+      {isLoading && (
+        <LoadingScreen
+          onComplete={() => {
+            setIsLoading(false);
+            navigate("/video-detection");
+          }}
+        />
+      )}
     </>
   );
 }

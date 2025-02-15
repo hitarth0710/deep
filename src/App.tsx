@@ -1,4 +1,5 @@
 import { Routes, Route, useRoutes } from "react-router-dom";
+import Team from "./pages/team";
 import Home from "./components/home";
 import VideoDetection from "./pages/video-detection";
 import ImageDetection from "./pages/image-detection";
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/sign-in" element={<SignIn />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/team" element={<Team />} />
 
         {/* Detection Routes */}
         <Route path="/video-detection" element={<VideoDetection />} />

@@ -1,5 +1,6 @@
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
+import { ReviewsDialog } from "./dialogs/ReviewsDialog";
 
 export default function Footer() {
   const navigate = useNavigate();
@@ -40,14 +41,26 @@ export default function Footer() {
         {/* Right Section */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">FEATURES</h3>
-          <div className="space-y-2">
-            <Button
-              variant="link"
-              className="text-sm text-gray-400 hover:text-white p-0 h-auto block"
-              onClick={() => navigate("/analyze")}
-            >
-              VIDEO DETECTION
-            </Button>
+          <div className="grid grid-cols-2 gap-x-8">
+            <div className="space-y-2">
+              <Button
+                variant="link"
+                className="text-sm text-gray-400 hover:text-white p-0 h-auto block"
+                onClick={() => navigate("/dashboard")}
+              >
+                VIDEO DETECTION
+              </Button>
+              <Button
+                variant="link"
+                className="text-sm text-gray-400 hover:text-white p-0 h-auto block"
+                onClick={() => navigate("/dashboard")}
+              >
+                IMAGE DETECTION
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <ReviewsDialog />
+            </div>
           </div>
         </div>
       </div>
