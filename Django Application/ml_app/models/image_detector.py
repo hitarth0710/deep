@@ -4,7 +4,7 @@ import random
 import os
 
 class ImageDeepfakeDetector:
-    def __init__(self, model_path=None):
+    def __init__(self, model_path='C:/tmp/deep/Django Application/ml_app/models/cnn_model.h5'):
         print("Initializing Image Deepfake Detector (Mock Version)...")
         self.target_size = (224, 224)  # Standard input size
         print("Image detector initialized successfully")
