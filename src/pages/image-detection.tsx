@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { FileUploadZone } from "@/components/upload/FileUploadZone";
@@ -106,7 +106,14 @@ export default function ImageDetection() {
             {file && !analyzing && !result && (
               <div className="mt-6 flex justify-center">
                 <Button onClick={handleAnalyze} size="lg">
-                  Start Analysis
+                  {analyzing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    "Start Analysis"
+                  )}
                 </Button>
               </div>
             )}

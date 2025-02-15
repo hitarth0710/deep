@@ -112,19 +112,22 @@ def analyze_image(request):
         
         # Validate file type
         allowed_extensions = ['.jpg', '.jpeg', '.png']
-        if file_ext not in allowed_extensions:
+        if not any(uploaded_file.name.lower().endswith(ext) for ext in allowed_extensions):
             return JsonResponse({
                 'error': f'Invalid file type. Allowed types: {", ".join(allowed_extensions)}'
             }, status=400)
 
         # Create temp directory if it doesn't exist
-        os.makedirs(os.path.join(settings.MEDIA_ROOT, 'temp'), exist_ok=True)
+        temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp')
+        os.makedirs(temp_dir, exist_ok=True)
 
         # Save file with proper extension
-        file_path = os.path.join(settings.MEDIA_ROOT, 'temp', f'temp_image{file_ext}')
+        file_path = os.path.join(temp_dir, f'temp_image{file_ext}')
         with open(file_path, 'wb+') as destination:
             for chunk in uploaded_file.chunks():
                 destination.write(chunk)
+
+        print(f"File saved at: {file_path}")
 
         # Analyze image
         result = image_detector.predict(file_path)
@@ -132,10 +135,12 @@ def analyze_image(request):
         # Clean up
         if os.path.exists(file_path):
             os.remove(file_path)
+            print(f"Cleaned up temporary file: {file_path}")
 
         return JsonResponse(result)
 
     except Exception as e:
+        print(f"Error in analyze_image: {str(e)}")
         if file_path and os.path.exists(file_path):
             os.remove(file_path)
         return JsonResponse({

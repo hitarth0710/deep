@@ -1,13 +1,11 @@
 import os
-import numpy as np
-from tensorflow.keras.preprocessing import image
-from tensorflow.keras.models import load_model
 import cv2
+import numpy as np
+from tensorflow.keras.models import load_model
 from mtcnn import MTCNN
-from pathlib import Path
 
 class ImageDeepfakeDetector:
-    def __init__(self, model_path='ml_app/models/image-model.h5'):
+    def __init__(self, model_path='ml_app/models/image_model.h5'):
         print("Initializing Image Deepfake Detector...")
         try:
             self.model = self.load_model(model_path)
@@ -23,13 +21,13 @@ class ImageDeepfakeDetector:
             if not os.path.exists(model_path):
                 raise FileNotFoundError(f"Model file not found at {model_path}")
 
-            print(f"Loading image model from {model_path}")
+            print(f"Loading model from {model_path}")
             model = load_model(model_path, compile=False)
-            print("Image model loaded successfully")
+            print("Model loaded successfully")
             return model
 
         except Exception as e:
-            print(f"Error loading image model: {str(e)}")
+            print(f"Error loading model: {str(e)}")
             raise
 
     def detect_and_crop_face(self, img):
@@ -62,11 +60,11 @@ class ImageDeepfakeDetector:
         try:
             # Convert BGR to RGB
             img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            # Convert to array and normalize
-            img_array = image.img_to_array(img_rgb)
-            img_array = np.expand_dims(img_array, axis=0)
-            img_array = img_array / 255.0
-            return img_array
+            # Normalize pixel values
+            img_norm = img_rgb.astype('float32') / 255.0
+            # Add batch dimension
+            img_batch = np.expand_dims(img_norm, axis=0)
+            return img_batch
 
         except Exception as e:
             print(f"Error preprocessing image: {str(e)}")
@@ -80,6 +78,9 @@ class ImageDeepfakeDetector:
             if img is None:
                 raise ValueError("Could not read image file")
 
+            # Get original image size
+            height, width, channels = img.shape
+
             # Detect and crop face
             face, face_detected = self.detect_and_crop_face(img)
             
@@ -87,7 +88,7 @@ class ImageDeepfakeDetector:
             processed_face = self.preprocess_image(face)
             
             # Get prediction
-            prediction = self.model.predict(processed_face)
+            prediction = self.model.predict(processed_face, verbose=0)
             
             # Process prediction
             if isinstance(prediction, list):
@@ -102,7 +103,7 @@ class ImageDeepfakeDetector:
                 'result': 'FAKE' if is_fake else 'REAL',
                 'confidence': confidence,
                 'face_detected': face_detected,
-                'image_size': img.shape
+                'image_size': [height, width, channels]
             }
 
             print(f"Image analysis complete. Result: {result['result']} with {result['confidence']:.2f}% confidence")
