@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import tensorflow as tf
 from tensorflow.keras.models import load_model
 import os
 
@@ -20,7 +21,25 @@ class DeepfakeDetector:
                 raise FileNotFoundError(f"Model file not found at {model_path}")
 
             print(f"Loading model from {model_path}")
-            model = load_model(model_path, compile=False)
+            # Try loading with custom objects and legacy mode
+            try:
+                model = tf.keras.models.load_model(
+                    model_path,
+                    compile=False,
+                    custom_objects=None
+                )
+            except ValueError as e:
+                if 'batch_shape' in str(e):
+                    # Try loading with legacy support
+                    model = tf.keras.models.load_model(
+                        model_path,
+                        compile=False,
+                        custom_objects=None,
+                        legacy_format=True
+                    )
+                else:
+                    raise
+
             print("Model loaded successfully")
             print(f"Model input shape: {model.input_shape}")
             return model
