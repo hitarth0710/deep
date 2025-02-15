@@ -10,8 +10,8 @@ class AudioDeepfakeDetector:
             self.model = self.load_model(model_path)
             self.sample_rate = 16000  # Standard sample rate
             self.duration = 5  # Duration in seconds to analyze
-            self.n_mels = 128  # Number of mel bands
-            self.hop_length = 512  # Number of samples between frames
+            self.n_mfcc = 40  # Number of MFCC features
+            self.n_segments = 256  # Number of segments to split audio into
             print("Audio detector initialized successfully")
         except Exception as e:
             print(f"Error initializing audio detector: {str(e)}")
@@ -34,11 +34,8 @@ class AudioDeepfakeDetector:
     def extract_features(self, audio_path):
         try:
             print(f"Extracting features from {audio_path}")
-            # Load audio file with error handling
-            try:
-                y, sr = librosa.load(audio_path, sr=self.sample_rate)
-            except Exception as e:
-                raise Exception(f"Error loading audio file: {str(e)}")
+            # Load audio file
+            y, sr = librosa.load(audio_path, sr=self.sample_rate)
 
             # Ensure minimum length
             if len(y) < self.sample_rate * 1:  # At least 1 second
@@ -47,36 +44,56 @@ class AudioDeepfakeDetector:
             # Trim silence
             y, _ = librosa.effects.trim(y)
 
-            # Extract mel spectrogram
-            mel_spect = librosa.feature.melspectrogram(
+            # Pad or truncate to fixed duration
+            target_length = self.sample_rate * self.duration
+            if len(y) < target_length:
+                y = np.pad(y, (0, target_length - len(y)))
+            else:
+                y = y[:target_length]
+
+            # Extract MFCC features
+            mfcc = librosa.feature.mfcc(
                 y=y,
                 sr=sr,
-                n_mels=self.n_mels,
-                hop_length=self.hop_length
+                n_mfcc=self.n_mfcc,
+                n_fft=2048,
+                hop_length=512
             )
-            
-            # Convert to log scale
-            mel_spect_db = librosa.power_to_db(mel_spect, ref=np.max)
-            
-            # Normalize
-            mel_spect_norm = (mel_spect_db - mel_spect_db.min()) / (mel_spect_db.max() - mel_spect_db.min())
-            
-            # Ensure fixed size by either truncating or padding
-            target_width = 128  # Fixed width for the spectrogram
-            if mel_spect_norm.shape[1] > target_width:
-                mel_spect_norm = mel_spect_norm[:, :target_width]
-            else:
-                pad_width = target_width - mel_spect_norm.shape[1]
-                mel_spect_norm = np.pad(mel_spect_norm, ((0, 0), (0, pad_width)))
 
-            # Reshape for model input (batch_size, height, width, channels)
-            features = mel_spect_norm.reshape(1, self.n_mels, target_width, 1)
+            # Extract additional features
+            spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)
+            spectral_rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
+            zero_crossing_rate = librosa.feature.zero_crossing_rate(y)
+
+            # Ensure all features have the same number of segments
+            target_segments = self.n_segments
+            mfcc = librosa.util.fix_length(mfcc, target_segments, axis=1)
+            spectral_centroid = librosa.util.fix_length(spectral_centroid, target_segments, axis=1)
+            spectral_rolloff = librosa.util.fix_length(spectral_rolloff, target_segments, axis=1)
+            zero_crossing_rate = librosa.util.fix_length(zero_crossing_rate, target_segments, axis=1)
+
+            # Flatten and concatenate all features
+            features = np.concatenate([
+                mfcc.flatten(),
+                spectral_centroid.flatten(),
+                spectral_rolloff.flatten(),
+                zero_crossing_rate.flatten()
+            ])
+
+            # Ensure exact size of 10240
+            if len(features) > 10240:
+                features = features[:10240]
+            elif len(features) < 10240:
+                features = np.pad(features, (0, 10240 - len(features)))
+
+            # Reshape for model input
+            features = features.reshape(1, -1)
 
             print("Feature extraction completed successfully")
             return features, {
-                'mel_spectrogram': mel_spect_norm.tolist(),
-                'sample_rate': sr,
-                'duration': len(y) / sr
+                'mfcc_shape': mfcc.shape,
+                'duration': len(y) / sr,
+                'sample_rate': sr
             }
 
         except Exception as e:
