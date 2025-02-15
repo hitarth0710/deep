@@ -6,8 +6,10 @@ from rest_framework.response import Response
 from .models.detector2 import DeepfakeDetector
 from .models.image_detector import ImageDeepfakeDetector
 
-# Initialize detectors with model paths
-MODEL_PATH = 'C:/Users/rajes/Downloads/my_model.h5'  # Update this path
+# Use a relative path for the model
+MODEL_PATH = os.path.join(settings.BASE_DIR, 'ml_app', 'models', 'model.h5')
+
+# Initialize detectors
 video_detector = DeepfakeDetector(model_path=MODEL_PATH)
 image_detector = ImageDeepfakeDetector(model_path=MODEL_PATH)
 

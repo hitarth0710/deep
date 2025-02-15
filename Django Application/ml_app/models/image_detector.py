@@ -21,25 +21,13 @@ class ImageDeepfakeDetector:
                 raise FileNotFoundError(f"Model file not found at {model_path}")
 
             print(f"Loading model from {model_path}")
-            # Try loading with custom objects and legacy mode
-            try:
-                model = tf.keras.models.load_model(
-                    model_path,
-                    compile=False,
-                    custom_objects=None
-                )
-            except ValueError as e:
-                if 'batch_shape' in str(e):
-                    # Try loading with legacy support
-                    model = tf.keras.models.load_model(
-                        model_path,
-                        compile=False,
-                        custom_objects=None,
-                        legacy_format=True
-                    )
-                else:
-                    raise
-
+            
+            # Load model with minimal options
+            model = tf.keras.models.load_model(
+                model_path,
+                compile=False
+            )
+            
             print("Model loaded successfully")
             print(f"Model input shape: {model.input_shape}")
             return model
