@@ -4,12 +4,12 @@ import cv2
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
-from .models.detector2 import DeepfakeDetector
+from .models.detector2 import VideoDeepfakeDetector
 from .models.audio_detector import AudioDeepfakeDetector
 from .models.image_detector import ImageDeepfakeDetector
 
 # Initialize detectors
-video_detector = DeepfakeDetector()
+video_detector = VideoDeepfakeDetector()
 audio_detector = AudioDeepfakeDetector()
 image_detector = ImageDeepfakeDetector()
 

@@ -19,6 +19,10 @@ export default function VideoDetection() {
   const [result, setResult] = useState<{
     result?: "REAL" | "FAKE";
     confidence?: number;
+    frame_predictions?: Array<[boolean, number]>;
+    faces_detected?: boolean[];
+    total_frames?: number;
+    frames_with_faces?: number;
   }>(null);
 
   const { user } = useAuth();
@@ -43,14 +47,28 @@ export default function VideoDetection() {
       setResult(null);
 
       // Send to backend
-      const response = await api.analyzeVideo(file);
+      const response = await api.analyzeVideo(file, (progress) => {
+        setProgress(progress);
+      });
+
       setResult(response);
+
+      // Show success toast
+      toast({
+        title: `Video Analysis Complete`,
+        description: `Result: ${response.result} (${response.confidence.toFixed(1)}% confidence)`,
+        variant: response.result === "FAKE" ? "destructive" : "default",
+      });
     } catch (error) {
       console.error("Analysis failed:", error);
-      alert(error instanceof Error ? error.message : "Analysis failed");
+      toast({
+        title: "Analysis Failed",
+        description:
+          error instanceof Error ? error.message : "Failed to analyze video",
+        variant: "destructive",
+      });
     } finally {
       setAnalyzing(false);
-      setProgress(100);
     }
   };
 
@@ -102,49 +120,97 @@ export default function VideoDetection() {
 
           {/* Results */}
           {result && (
-            <Card className="p-6">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Analysis Results</h3>
-                  <Badge
-                    variant={
-                      result.result === "FAKE" ? "destructive" : "default"
-                    }
-                    className="text-sm"
-                  >
-                    {result.result === "FAKE" ? (
-                      <>
-                        <AlertCircle className="w-4 h-4 mr-1" />
-                        Likely Deepfake
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-4 h-4 mr-1" />
-                        Likely Authentic
-                      </>
-                    )}
-                  </Badge>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      Confidence Score
-                    </span>
-                    <span>{result.confidence?.toFixed(1)}%</span>
+            <div className="space-y-6">
+              <Card className="p-6">
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Analysis Results</h3>
+                    <Badge
+                      variant={
+                        result.result === "FAKE" ? "destructive" : "default"
+                      }
+                      className="text-sm"
+                    >
+                      {result.result === "FAKE" ? (
+                        <>
+                          <AlertCircle className="w-4 h-4 mr-1" />
+                          Likely Deepfake
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 mr-1" />
+                          Likely Authentic
+                        </>
+                      )}
+                    </Badge>
                   </div>
-                  <Progress
-                    value={result.confidence}
-                    className={
-                      result.result === "FAKE" ? "bg-destructive/20" : ""
-                    }
-                    indicatorClassName={
-                      result.result === "FAKE" ? "bg-destructive" : ""
-                    }
-                  />
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Confidence Score
+                      </span>
+                      <span>{result.confidence?.toFixed(1)}%</span>
+                    </div>
+                    <Progress
+                      value={result.confidence}
+                      className={
+                        result.result === "FAKE" ? "bg-destructive/20" : ""
+                      }
+                      indicatorClassName={
+                        result.result === "FAKE" ? "bg-destructive" : ""
+                      }
+                    />
+                  </div>
+
+                  {/* Additional Analysis Details */}
+                  <div className="grid grid-cols-2 gap-4 pt-4">
+                    <div className="space-y-2">
+                      <div className="text-sm text-muted-foreground">
+                        Total Frames
+                      </div>
+                      <div className="text-2xl font-bold">
+                        {result.total_frames}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-sm text-muted-foreground">
+                        Faces Detected
+                      </div>
+                      <div className="text-2xl font-bold">
+                        {result.frames_with_faces}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+
+              {/* Frame Analysis Visualization */}
+              {result.frame_predictions && (
+                <Card className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Frame Analysis</h3>
+                  <div className="h-20 relative border rounded-md overflow-hidden">
+                    {result.frame_predictions.map((prediction, i) => (
+                      <div
+                        key={i}
+                        className={`absolute w-1 h-full transition-colors ${
+                          prediction[0] ? "bg-destructive" : "bg-primary"
+                        }`}
+                        style={{
+                          left: `${(i / result.frame_predictions.length) * 100}%`,
+                          opacity: prediction[1],
+                        }}
+                        title={`Frame ${i}: ${(prediction[1] * 100).toFixed(1)}% confidence`}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex justify-between mt-2 text-sm text-muted-foreground">
+                    <span>Start</span>
+                    <span>End</span>
+                  </div>
+                </Card>
+              )}
+            </div>
           )}
         </div>
       </div>
