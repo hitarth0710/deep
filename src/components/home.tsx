@@ -126,17 +126,62 @@ export default function Home() {
             }}
           >
             <div className="w-full h-full flex items-center justify-center">
-              <span
-                className="text-[20vw] font-bold leading-none tracking-tighter select-none whitespace-nowrap"
-                style={{
-                  color: "#ff6b00",
-                  opacity: 0.95,
-                  WebkitTextStroke: "1px rgba(255, 107, 0, 0.1)",
-                  letterSpacing: "-0.05em",
-                }}
-              >
-                MASKOFF
-              </span>
+              <div className="flex">
+                {"MASKOFF".split("").map((letter, index) => (
+                  <motion.span
+                    key={index}
+                    className="text-[20vw] font-bold leading-none tracking-tighter select-none relative"
+                    style={{
+                      color: "#ff6b00",
+                      opacity: 0.95,
+                      WebkitTextStroke: "1px rgba(255, 107, 0, 0.1)",
+                      letterSpacing: "-0.05em",
+                      display: "inline-block",
+                    }}
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      rotate: [0, -5, 5, -5, 0],
+                      scale: [1, 1.1, 1],
+                      transition: {
+                        duration: 2,
+                        delay: index * 0.1,
+                        repeat: Infinity,
+                        repeatDelay: 3,
+                      },
+                    }}
+                    whileHover={{
+                      scale: 1.4,
+                      y: -30,
+                      rotate: [0, -15, 15, -15, 0],
+                      transition: {
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 10,
+                        duration: 0.5,
+                      },
+                    }}
+                  >
+                    <motion.span
+                      className="absolute -inset-1 blur-lg"
+                      style={{ color: "#ff6b00", opacity: 0.3 }}
+                      animate={{
+                        opacity: [0.3, 0.6, 0.3],
+                        scale: [1, 1.1, 1],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatType: "reverse",
+                      }}
+                    >
+                      {letter}
+                    </motion.span>
+                    {letter}
+                  </motion.span>
+                ))}
+              </div>
             </div>
           </motion.div>
           <div className="relative z-10">
