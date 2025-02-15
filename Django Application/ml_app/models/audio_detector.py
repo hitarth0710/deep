@@ -10,6 +10,8 @@ class AudioDeepfakeDetector:
             self.model = self.load_model(model_path)
             self.sample_rate = 16000  # Standard sample rate
             self.duration = 5  # Duration in seconds to analyze
+            self.n_mels = 128  # Number of mel bands
+            self.hop_length = 512  # Number of samples between frames
             print("Audio detector initialized successfully")
         except Exception as e:
             print(f"Error initializing audio detector: {str(e)}")
@@ -45,26 +47,36 @@ class AudioDeepfakeDetector:
             # Trim silence
             y, _ = librosa.effects.trim(y)
 
-            # Extract features
-            mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
-            spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)
-            spectral_rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
-            zero_crossing_rate = librosa.feature.zero_crossing_rate(y)
+            # Extract mel spectrogram
+            mel_spect = librosa.feature.melspectrogram(
+                y=y,
+                sr=sr,
+                n_mels=self.n_mels,
+                hop_length=self.hop_length
+            )
+            
+            # Convert to log scale
+            mel_spect_db = librosa.power_to_db(mel_spect, ref=np.max)
+            
+            # Normalize
+            mel_spect_norm = (mel_spect_db - mel_spect_db.min()) / (mel_spect_db.max() - mel_spect_db.min())
+            
+            # Ensure fixed size by either truncating or padding
+            target_width = 128  # Fixed width for the spectrogram
+            if mel_spect_norm.shape[1] > target_width:
+                mel_spect_norm = mel_spect_norm[:, :target_width]
+            else:
+                pad_width = target_width - mel_spect_norm.shape[1]
+                mel_spect_norm = np.pad(mel_spect_norm, ((0, 0), (0, pad_width)))
 
-            # Combine features
-            features = np.concatenate([
-                mfccs.mean(axis=1),
-                spectral_centroid.mean(axis=1),
-                spectral_rolloff.mean(axis=1),
-                [zero_crossing_rate.mean()]
-            ])
+            # Reshape for model input (batch_size, height, width, channels)
+            features = mel_spect_norm.reshape(1, self.n_mels, target_width, 1)
 
             print("Feature extraction completed successfully")
             return features, {
-                'mfccs': mfccs.tolist(),
-                'spectral_centroid': spectral_centroid.tolist(),
-                'spectral_rolloff': spectral_rolloff.tolist(),
-                'zero_crossing_rate': zero_crossing_rate.tolist()
+                'mel_spectrogram': mel_spect_norm.tolist(),
+                'sample_rate': sr,
+                'duration': len(y) / sr
             }
 
         except Exception as e:
@@ -80,9 +92,6 @@ class AudioDeepfakeDetector:
 
             # Extract features
             features, feature_data = self.extract_features(audio_path)
-            
-            # Reshape features for model input
-            features = np.expand_dims(features, axis=0)
             
             # Get prediction
             prediction = self.model.predict(features)
@@ -100,7 +109,7 @@ class AudioDeepfakeDetector:
                 'result': 'FAKE' if is_fake else 'REAL',
                 'confidence': confidence,
                 'feature_data': feature_data,
-                'segments_analyzed': len(feature_data['mfccs'][0])
+                'duration': feature_data['duration']
             }
 
             print(f"Audio analysis complete. Result: {result['result']} with {result['confidence']:.2f}% confidence")
