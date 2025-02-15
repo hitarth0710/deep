@@ -6,9 +6,14 @@ import librosa
 class AudioDeepfakeDetector:
     def __init__(self, model_path='ml_app/models/audio-model.h5'):
         print("Initializing Audio Deepfake Detector...")
-        self.model = self.load_model(model_path)
-        self.sample_rate = 16000  # Standard sample rate
-        self.duration = 5  # Duration in seconds to analyze
+        try:
+            self.model = self.load_model(model_path)
+            self.sample_rate = 16000  # Standard sample rate
+            self.duration = 5  # Duration in seconds to analyze
+            print("Audio detector initialized successfully")
+        except Exception as e:
+            print(f"Error initializing audio detector: {str(e)}")
+            raise
 
     def load_model(self, model_path):
         try:
@@ -26,8 +31,16 @@ class AudioDeepfakeDetector:
 
     def extract_features(self, audio_path):
         try:
-            # Load audio file
-            y, sr = librosa.load(audio_path, sr=self.sample_rate)
+            print(f"Extracting features from {audio_path}")
+            # Load audio file with error handling
+            try:
+                y, sr = librosa.load(audio_path, sr=self.sample_rate)
+            except Exception as e:
+                raise Exception(f"Error loading audio file: {str(e)}")
+
+            # Ensure minimum length
+            if len(y) < self.sample_rate * 1:  # At least 1 second
+                raise Exception("Audio file too short")
 
             # Trim silence
             y, _ = librosa.effects.trim(y)
@@ -46,6 +59,7 @@ class AudioDeepfakeDetector:
                 [zero_crossing_rate.mean()]
             ])
 
+            print("Feature extraction completed successfully")
             return features, {
                 'mfccs': mfccs.tolist(),
                 'spectral_centroid': spectral_centroid.tolist(),
@@ -59,6 +73,11 @@ class AudioDeepfakeDetector:
 
     def predict(self, audio_path):
         try:
+            print(f"Starting audio analysis for {audio_path}")
+            # Validate file exists
+            if not os.path.exists(audio_path):
+                raise FileNotFoundError(f"Audio file not found: {audio_path}")
+
             # Extract features
             features, feature_data = self.extract_features(audio_path)
             

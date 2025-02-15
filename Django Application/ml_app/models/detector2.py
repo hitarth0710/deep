@@ -6,21 +6,20 @@ import cv2
 from mtcnn import MTCNN
 from pathlib import Path
 
-class DeepfakeDetector:
-    def __init__(self):
+class VideoDeepfakeDetector:
+    def __init__(self, model_path='ml_app/models/cnn-model.h5'):
         print("Initializing Deepfake Detector...")
-        self.model = self.load_model()
+        self.model = self.load_model(model_path)
         self.detector = MTCNN()
         self.target_size = (128, 128)
 
-    def load_model(self):
+    def load_model(self, model_path):
         try:
-            model_path = Path(__file__).parent / 'cnn_model.h5'
-            if not model_path.exists():
+            if not os.path.exists(model_path):
                 raise FileNotFoundError(f"Model file not found at {model_path}")
 
             print(f"Loading model from {model_path}")
-            model = load_model(str(model_path), compile=False)  # Added compile=False
+            model = load_model(model_path, compile=False)
             print("Model loaded successfully")
             return model
             
@@ -30,6 +29,10 @@ class DeepfakeDetector:
 
     def detect_and_crop_face(self, frame):
         try:
+            # Ensure frame is a numpy array
+            if not isinstance(frame, np.ndarray):
+                raise ValueError("Frame must be a numpy array")
+
             # Convert BGR to RGB for MTCNN
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = self.detector.detect_faces(frame_rgb)
@@ -71,6 +74,10 @@ class DeepfakeDetector:
 
     def predict_frame(self, frame):
         try:
+            # Ensure frame is a numpy array
+            if not isinstance(frame, np.ndarray):
+                raise ValueError("Frame must be a numpy array")
+
             # Detect and crop face
             face, face_detected = self.detect_and_crop_face(frame)
             
@@ -99,24 +106,51 @@ class DeepfakeDetector:
             print(f"Error predicting frame: {str(e)}")
             raise
 
-    def analyze_video(self, frames):
+    def extract_frames(self, video_path, max_frames=30):
         try:
+            frames = []
+            cap = cv2.VideoCapture(video_path)
+            frame_count = 0
+
+            while frame_count < max_frames:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                    
+                # Ensure frame is a valid numpy array
+                if isinstance(frame, np.ndarray) and frame.size > 0:
+                    frames.append(frame)
+                    frame_count += 1
+
+            cap.release()
+            return frames
+
+        except Exception as e:
+            print(f"Error extracting frames: {str(e)}")
+            raise
+
+    def analyze_video(self, video_path):
+        try:
+            # Extract frames from video
+            frames = self.extract_frames(video_path)
+            if not frames:
+                raise Exception("No valid frames could be extracted from video")
+
             predictions = []
             confidences = []
             faces_detected = []
-            processed_frames = []
 
             for i, frame in enumerate(frames):
                 print(f"Analyzing frame {i+1}/{len(frames)}")
+                # Ensure frame is valid
+                if not isinstance(frame, np.ndarray) or frame.size == 0:
+                    print(f"Skipping invalid frame {i+1}")
+                    continue
+                    
                 is_fake, confidence, face_detected = self.predict_frame(frame)
-                
                 predictions.append(is_fake)
                 confidences.append(confidence)
                 faces_detected.append(face_detected)
-                
-                # Only consider frames where a face was detected
-                if face_detected:
-                    processed_frames.append(frame)
 
             # Calculate results only from frames with detected faces
             if any(faces_detected):
