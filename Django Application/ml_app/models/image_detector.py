@@ -7,15 +7,15 @@ import os
 class ImageDeepfakeDetector:
     def __init__(self, model_path='ml_app/models/cnn_model.h5'):
         print("Initializing Image Deepfake Detector...")
-        self.target_size = (224, 224)  # Standard input size for CNN model
+        self.target_size = (128, 128)  # Changed to match video model input size
         
         try:
             # Load the same CNN model used for video detection
             self.model = load_model(model_path)
             print("Model loaded successfully")
             
-            # Warm up the model
-            dummy_input = np.zeros((1, 224, 224, 3))
+            # Warm up the model with correct input shape
+            dummy_input = np.zeros((1, 128, 128, 3))  # Changed dimensions
             self.model.predict(dummy_input)
             print("Model warm-up complete")
             
@@ -24,24 +24,29 @@ class ImageDeepfakeDetector:
             raise
 
     def preprocess_image(self, image):
-        # Convert to RGB if needed
-        if len(image.shape) == 2:
-            image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-        elif image.shape[2] == 4:
-            image = cv2.cvtColor(image, cv2.COLOR_BGRA2RGB)
-        elif image.shape[2] == 3:
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        try:
+            # Convert to RGB if needed
+            if len(image.shape) == 2:
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+            elif image.shape[2] == 4:
+                image = cv2.cvtColor(image, cv2.COLOR_BGRA2RGB)
+            elif image.shape[2] == 3:
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        # Resize to match CNN input size
-        image = cv2.resize(image, self.target_size)
-        
-        # Normalize pixel values to [0, 1]
-        image = image.astype(np.float32) / 255.0
-        
-        # Add batch dimension
-        image = np.expand_dims(image, axis=0)
-        
-        return image
+            # Resize to match model's expected input size
+            image = cv2.resize(image, self.target_size)
+            
+            # Normalize pixel values to [0, 1]
+            image = image.astype(np.float32) / 255.0
+            
+            # Add batch dimension
+            image = np.expand_dims(image, axis=0)
+            
+            return image
+            
+        except Exception as e:
+            print(f"Error in preprocessing: {str(e)}")
+            raise
 
     def predict(self, image_path):
         try:
@@ -58,7 +63,7 @@ class ImageDeepfakeDetector:
             # Preprocess image
             processed_image = self.preprocess_image(image)
             
-            # Make prediction using the same CNN model
+            # Make prediction
             prediction = self.model.predict(processed_image)[0][0]
             
             # Convert prediction to result
@@ -69,7 +74,7 @@ class ImageDeepfakeDetector:
                 'result': 'FAKE' if is_fake else 'REAL',
                 'confidence': confidence,
                 'image_size': [height, width, image.shape[2]],
-                'input_shape': [224, 224, 3]
+                'input_shape': self.target_size + (3,)
             }
             
             print(f"Image analysis complete. Result: {result['result']} with {result['confidence']:.2f}% confidence")
