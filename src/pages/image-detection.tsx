@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { ImageCropDialog } from "@/components/dialogs/ImageCropDialog";
 import { Upload, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { FileUploadZone } from "@/components/upload/FileUploadZone";
 import { Card } from "@/components/ui/card";
@@ -14,6 +15,8 @@ import { useNavigate } from "react-router-dom";
 
 export default function ImageDetection() {
   const [file, setFile] = useState<File | null>(null);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string>("");
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<{
@@ -23,6 +26,7 @@ export default function ImageDetection() {
     image_size?: [number, number, number];
   }>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
 
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -72,6 +76,10 @@ export default function ImageDetection() {
   };
 
   const handleReset = () => {
+    if (croppedImageUrl) {
+      URL.revokeObjectURL(croppedImageUrl);
+      setCroppedImageUrl(null);
+    }
     setFile(null);
     setResult(null);
     setAnalyzing(false);
@@ -123,21 +131,67 @@ export default function ImageDetection() {
                   </svg>
                 </Button>
               )}
-              <FileUploadZone
-                acceptedTypes={["image"]}
-                onFileSelect={setFile}
-                uploading={analyzing}
-                progress={progress}
-                maxSize={20 * 1024 * 1024} // 20MB
-              />
-
-              {file && !analyzing && !result && (
-                <div className="mt-6 flex justify-center">
-                  <Button onClick={handleAnalyze} size="lg">
-                    Start Analysis
-                  </Button>
+              {!file ? (
+                <FileUploadZone
+                  acceptedTypes={["image"]}
+                  onFileSelect={(selectedFile) => {
+                    const imageUrl = URL.createObjectURL(selectedFile);
+                    setSelectedImageUrl(imageUrl);
+                    setCropDialogOpen(true);
+                  }}
+                  uploading={analyzing}
+                  progress={progress}
+                  maxSize={20 * 1024 * 1024} // 20MB
+                />
+              ) : (
+                <div className="space-y-4">
+                  <div className="aspect-square w-full max-w-md mx-auto overflow-hidden rounded-lg border border-border">
+                    <img
+                      src={croppedImageUrl || URL.createObjectURL(file)}
+                      alt="Cropped preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex justify-center gap-4">
+                    <Button variant="outline" onClick={handleReset}>
+                      Choose Different Image
+                    </Button>
+                    {!analyzing && !result && (
+                      <Button onClick={handleAnalyze}>Start Analysis</Button>
+                    )}
+                  </div>
                 </div>
               )}
+
+              <ImageCropDialog
+                open={cropDialogOpen}
+                onOpenChange={setCropDialogOpen}
+                imageUrl={selectedImageUrl}
+                onCropComplete={(croppedBlob) => {
+                  const croppedFile = new File(
+                    [croppedBlob],
+                    "cropped-image.jpg",
+                    {
+                      type: "image/jpeg",
+                    },
+                  );
+                  // Create URL for the cropped image
+                  const croppedUrl = URL.createObjectURL(croppedBlob);
+                  setCroppedImageUrl(croppedUrl);
+                  setFile(croppedFile);
+
+                  // Clean up old URLs
+                  if (selectedImageUrl) {
+                    URL.revokeObjectURL(selectedImageUrl);
+                  }
+                  if (previewUrl) {
+                    URL.revokeObjectURL(previewUrl);
+                  }
+
+                  // Start analysis automatically
+                  handleAnalyze();
+                }}
+              />
             </div>
           </Card>
 
