@@ -1,13 +1,103 @@
-import cv2
-import numpy as np
-import random
 import os
+import numpy as np
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.models import load_model
+import cv2
+from mtcnn import MTCNN
+from pathlib import Path
 
 class DeepfakeDetector:
-    def __init__(self, model_path=None):
-        print("Initializing Video Deepfake Detector (Mock Version)...")
-        self.target_size = (224, 224)  # Standard input size
-        print("Video detector initialized successfully")
+    def __init__(self, model_path='C:/tmp/deep/Django Application/ml_app/models/cnn_model.h5'):
+        print("Initializing Deepfake Detector...")
+        self.model_path = model_path
+        self.model = self.load_model()
+        self.detector = MTCNN()
+        self.target_size = (128, 128)
+
+    def load_model(self):
+        try:
+            if not os.path.exists(self.model_path):
+                raise FileNotFoundError(f"Model file not found at {self.model_path}")
+
+            print(f"Loading model from {self.model_path}")
+            model = load_model(self.model_path, compile=False)
+            print("Model loaded successfully")
+            return model
+            
+        except Exception as e:
+            print(f"Error loading model: {str(e)}")
+            raise
+
+    def detect_and_crop_face(self, frame):
+        try:
+            # Convert BGR to RGB for MTCNN
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = self.detector.detect_faces(frame_rgb)
+            
+            if results:
+                bounding_box = results[0]['box']
+                x, y, width, height = bounding_box
+                # Add padding to the bounding box
+                padding = int(min(width, height) * 0.1)
+                x = max(0, x - padding)
+                y = max(0, y - padding)
+                width = min(frame.shape[1] - x, width + 2*padding)
+                height = min(frame.shape[0] - y, height + 2*padding)
+                
+                face = frame[y:y+height, x:x+width]
+                face = cv2.resize(face, self.target_size)
+                return face, True
+            else:
+                # If no face is detected, return the resized full frame
+                return cv2.resize(frame, self.target_size), False
+                
+        except Exception as e:
+            print(f"Error detecting face: {str(e)}")
+            return cv2.resize(frame, self.target_size), False
+
+    def preprocess_face(self, face):
+        try:
+            # Convert BGR to RGB
+            face_rgb = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
+            # Convert to array and normalize
+            img_array = image.img_to_array(face_rgb)
+            img_array = np.expand_dims(img_array, axis=0)
+            img_array = img_array / 255.0  # Normalize to [0, 1]
+            return img_array
+            
+        except Exception as e:
+            print(f"Error preprocessing face: {str(e)}")
+            raise
+
+    def predict_frame(self, frame):
+        try:
+            # Detect and crop face
+            face, face_detected = self.detect_and_crop_face(frame)
+            
+            # Preprocess the face
+            processed_face = self.preprocess_face(face)
+            
+            # Get prediction
+            prediction = self.model.predict(processed_face)
+            
+            # Handle different model output formats
+            if isinstance(prediction, list):
+                prediction = prediction[0]
+            elif len(prediction.shape) > 1 and prediction.shape[1] > 1:
+                # If model outputs probabilities for both classes
+                prediction = prediction[0][1]  # Take fake probability
+            else:
+                prediction = prediction[0][0]  # Single output
+            
+            # Get result
+            is_fake = prediction >= 0.5  # Adjust threshold if needed
+            confidence = float(prediction if is_fake else 1 - prediction) * 100
+            
+            return is_fake, confidence, face_detected
+            
+        except Exception as e:
+            print(f"Error predicting frame: {str(e)}")
+            raise
 
     def extract_frames(self, video_path, max_frames=32):
         print(f"Extracting frames from {video_path}")
@@ -21,15 +111,13 @@ class DeepfakeDetector:
                 cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
                 ret, frame = cap.read()
                 if ret:
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    frame = cv2.resize(frame, self.target_size)
                     frames.append(frame)
             cap.release()
         except Exception as e:
             print(f"Error extracting frames: {str(e)}")
             raise
 
-        return np.array(frames)
+        return frames
 
     def predict(self, video_path):
         try:
@@ -40,31 +128,58 @@ class DeepfakeDetector:
             if len(frames) == 0:
                 raise ValueError("No frames could be extracted from the video")
 
-            # Mock predictions
-            total_frames = len(frames)
-            predictions = [random.random() > 0.5 for _ in range(total_frames)]
-            confidences = [random.uniform(0.6, 0.9) for _ in range(total_frames)]
+            return self.analyze_video(frames)
 
-            # Calculate overall result
-            fake_count = sum(predictions)
-            is_fake = fake_count > total_frames * 0.5
+        except Exception as e:
+            print(f"Error analyzing video: {str(e)}")
+            raise
 
-            # Calculate average confidence
-            avg_confidence = np.mean([conf if pred else 1-conf 
-                                    for pred, conf in zip(predictions, confidences)]) * 100
+    def analyze_video(self, frames):
+        try:
+            predictions = []
+            confidences = []
+            faces_detected = []
+            processed_frames = []
 
+            for i, frame in enumerate(frames):
+                print(f"Analyzing frame {i+1}/{len(frames)}")
+                is_fake, confidence, face_detected = self.predict_frame(frame)
+                
+                predictions.append(is_fake)
+                confidences.append(confidence)
+                faces_detected.append(face_detected)
+                
+                # Only consider frames where a face was detected
+                if face_detected:
+                    processed_frames.append(frame)
+
+            # Calculate results only from frames with detected faces
+            if any(faces_detected):
+                valid_predictions = [p for p, d in zip(predictions, faces_detected) if d]
+                valid_confidences = [c for c, d in zip(confidences, faces_detected) if d]
+                
+                fake_ratio = sum(valid_predictions) / len(valid_predictions)
+                avg_confidence = sum(valid_confidences) / len(valid_confidences)
+            else:
+                fake_ratio = 0
+                avg_confidence = 0
+
+            # Final decision based on majority voting
+            is_fake = fake_ratio > 0.5
             result = {
                 'result': 'FAKE' if is_fake else 'REAL',
-                'confidence': float(avg_confidence),
-                'total_frames': total_frames,
-                'fake_frames': int(fake_count),
-                'frame_predictions': [(bool(pred), float(conf)) 
-                                    for pred, conf in zip(predictions, confidences)]
+                'confidence': avg_confidence,
+                'frame_predictions': list(zip(predictions, confidences)),
+                'faces_detected': faces_detected,
+                'total_frames': len(frames),
+                'frames_with_faces': sum(faces_detected)
             }
-
-            print(f"Video analysis complete. Result: {result['result']} with {result['confidence']:.2f}% confidence")
+            
+            print(f"Analysis complete. Result: {result['result']} with {result['confidence']:.2f}% confidence")
+            print(f"Faces detected in {result['frames_with_faces']}/{result['total_frames']} frames")
+            
             return result
-
+            
         except Exception as e:
             print(f"Error analyzing video: {str(e)}")
             raise
