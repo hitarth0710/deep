@@ -6,12 +6,9 @@ from rest_framework.response import Response
 from .models.detector2 import DeepfakeDetector
 from .models.image_detector import ImageDeepfakeDetector
 
-# Use a relative path for the model
-MODEL_PATH = os.path.join(settings.BASE_DIR, 'ml_app', 'models', 'model.h5')
-
-# Initialize detectors
-video_detector = DeepfakeDetector(model_path=MODEL_PATH)
-image_detector = ImageDeepfakeDetector(model_path=MODEL_PATH)
+# Initialize detectors (no model path needed for mock version)
+video_detector = DeepfakeDetector()
+image_detector = ImageDeepfakeDetector()
 
 @api_view(['POST'])
 def analyze_video(request):

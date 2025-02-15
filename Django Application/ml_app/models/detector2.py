@@ -1,40 +1,13 @@
 import cv2
 import numpy as np
-import tensorflow as tf
-from tensorflow.keras.models import load_model
+import random
 import os
 
 class DeepfakeDetector:
-    def __init__(self, model_path='C:/Users/rajes/Downloads/my_model.h5'):
-        print("Initializing Video Deepfake Detector...")
-        try:
-            self.model = self.load_model(model_path)
-            self.target_size = (224, 224)  # Standard input size for most CNN models
-            print("Video detector initialized successfully")
-        except Exception as e:
-            print(f"Error initializing video detector: {str(e)}")
-            raise
-
-    def load_model(self, model_path):
-        try:
-            if not os.path.exists(model_path):
-                raise FileNotFoundError(f"Model file not found at {model_path}")
-
-            print(f"Loading model from {model_path}")
-            
-            # Load model with minimal options
-            model = tf.keras.models.load_model(
-                model_path,
-                compile=False
-            )
-            
-            print("Model loaded successfully")
-            print(f"Model input shape: {model.input_shape}")
-            return model
-
-        except Exception as e:
-            print(f"Error loading model: {str(e)}")
-            raise
+    def __init__(self, model_path=None):
+        print("Initializing Video Deepfake Detector (Mock Version)...")
+        self.target_size = (224, 224)  # Standard input size
+        print("Video detector initialized successfully")
 
     def extract_frames(self, video_path, max_frames=32):
         print(f"Extracting frames from {video_path}")
@@ -67,22 +40,13 @@ class DeepfakeDetector:
             if len(frames) == 0:
                 raise ValueError("No frames could be extracted from the video")
 
-            # Preprocess frames
-            frames = frames.astype('float32') / 255.0
-            
-            # Make predictions on each frame
-            predictions = []
-            confidences = []
-            for frame in frames:
-                # Add batch dimension
-                frame_batch = np.expand_dims(frame, axis=0)
-                pred = self.model.predict(frame_batch, verbose=0)
-                predictions.append(pred[0][0] > 0.5)
-                confidences.append(float(pred[0][0]))
+            # Mock predictions
+            total_frames = len(frames)
+            predictions = [random.random() > 0.5 for _ in range(total_frames)]
+            confidences = [random.uniform(0.6, 0.9) for _ in range(total_frames)]
 
             # Calculate overall result
             fake_count = sum(predictions)
-            total_frames = len(predictions)
             is_fake = fake_count > total_frames * 0.5
 
             # Calculate average confidence
