@@ -127,17 +127,31 @@ export default function Home() {
             }}
           >
             <div className="w-full h-full flex items-center justify-center">
-              <span
-                className="text-[20vw] font-bold leading-none tracking-tighter select-none whitespace-nowrap"
-                style={{
-                  color: "#ff6b00",
-                  opacity: 0.95,
-                  WebkitTextStroke: "1px rgba(255, 107, 0, 0.1)",
-                  letterSpacing: "-0.05em",
-                }}
-              >
-                MASKOFF
-              </span>
+              <div className="flex items-center justify-center">
+                {"MASKOFF".split("").map((letter, index) => (
+                  <motion.span
+                    key={index}
+                    className="text-[20vw] font-bold leading-none tracking-tighter select-none"
+                    style={{
+                      color: "#ff6b00",
+                      opacity: 0.95,
+                      WebkitTextStroke: "1px rgba(255, 107, 0, 0.1)",
+                      display: "inline-block",
+                    }}
+                    animate={{
+                      y: [0, -20, 0],
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      ease: "easeInOut",
+                      repeat: Infinity,
+                      delay: index * 0.1,
+                    }}
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
+              </div>
             </div>
           </motion.div>
           <div className="relative z-10">

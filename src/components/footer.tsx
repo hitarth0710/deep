@@ -44,9 +44,16 @@ export default function Footer() {
             <Button
               variant="link"
               className="text-sm text-gray-400 hover:text-white p-0 h-auto block"
-              onClick={() => navigate("/analyze")}
+              onClick={() => navigate("/video-detection")}
             >
               VIDEO DETECTION
+            </Button>
+            <Button
+              variant="link"
+              className="text-sm text-gray-400 hover:text-white p-0 h-auto block"
+              onClick={() => navigate("/image-detection")}
+            >
+              IMAGE DETECTION
             </Button>
           </div>
         </div>
