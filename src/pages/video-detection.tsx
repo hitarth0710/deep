@@ -87,21 +87,48 @@ export default function VideoDetection() {
         <div className="space-y-6">
           {/* Upload Section */}
           <Card className="p-8">
-            <FileUploadZone
-              acceptedTypes={["video"]}
-              onFileSelect={setFile}
-              uploading={analyzing}
-              progress={progress}
-              maxSize={100 * 1024 * 1024} // 100MB
-            />
-
-            {file && !analyzing && !result && (
-              <div className="mt-6 flex justify-center">
-                <Button onClick={handleAnalyze} size="lg">
-                  Start Analysis
+            <div className="relative">
+              {file && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute top-2 right-2 z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.location.reload();
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4"
+                  >
+                    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.85.99 6.57 2.57" />
+                    <path d="M21 3v9h-9" />
+                  </svg>
                 </Button>
-              </div>
-            )}
+              )}
+              <FileUploadZone
+                acceptedTypes={["video"]}
+                onFileSelect={setFile}
+                uploading={analyzing}
+                progress={progress}
+                maxSize={100 * 1024 * 1024} // 100MB
+              />
+
+              {file && !analyzing && !result && (
+                <div className="mt-6 flex justify-center">
+                  <Button onClick={handleAnalyze} size="lg">
+                    Start Analysis
+                  </Button>
+                </div>
+              )}
+            </div>
           </Card>
 
           {/* Analysis Progress */}
