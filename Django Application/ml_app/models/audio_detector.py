@@ -2,9 +2,7 @@ import os
 import librosa
 import numpy as np
 import soundfile as sf
-import tensorflow as tf
 from tensorflow.keras.models import load_model
-from tensorflow.keras.models import model_from_json
 
 class AudioDeepfakeDetector:
     def __init__(self, model_path='C:/Users/rajes/Downloads/my_model.h5'):
@@ -12,8 +10,8 @@ class AudioDeepfakeDetector:
         try:
             self.model = self.load_model(model_path)
             self.target_sr = 16000
-            self.n_mfcc = 128
-            self.max_length = 128
+            self.n_mfcc = 40  # Changed to match original code
+            self.max_length = 500  # Changed to match original code
             print("Audio detector initialized successfully")
         except Exception as e:
             print(f"Error initializing audio detector: {str(e)}")
@@ -21,19 +19,12 @@ class AudioDeepfakeDetector:
 
     def load_model(self, model_path):
         try:
-            # Verify model path
             if not os.path.exists(model_path):
                 raise FileNotFoundError(f"Model file not found at {model_path}")
 
             print(f"Loading model from {model_path}")
-            model = tf.keras.models.load_model(
-                model_path,
-                compile=False,
-                custom_objects=None
-            )
-
+            model = load_model(model_path, compile=False)
             print("Model loaded successfully")
-            print(f"Model input shape: {model.input_shape}")
             return model
 
         except Exception as e:
@@ -55,37 +46,17 @@ class AudioDeepfakeDetector:
                 # Fallback to librosa load
                 audio, sr = librosa.load(audio_file_path, sr=self.target_sr)
             
-            # Convert stereo to mono if necessary
-            if len(audio.shape) > 1:
-                audio = np.mean(audio, axis=1)
+            # Extract features (using MFCC exactly as in original code)
+            mfccs = librosa.feature.mfcc(y=audio, sr=self.target_sr, n_mfcc=self.n_mfcc)
             
-            # Extract features (using Mel-Frequency Cepstral Coefficients)
-            mel_spect = librosa.feature.melspectrogram(
-                y=audio, 
-                sr=self.target_sr,
-                n_mels=self.n_mfcc,
-                hop_length=512,
-                n_fft=2048
-            )
-            
-            # Convert to log scale
-            mel_spect_db = librosa.power_to_db(mel_spect, ref=np.max)
-            
-            # Normalize
-            mel_spect_db = (mel_spect_db - np.min(mel_spect_db)) / (np.max(mel_spect_db) - np.min(mel_spect_db))
-            
-            # Pad or trim to fixed length
-            if mel_spect_db.shape[1] < self.max_length:
-                mel_spect_db = np.pad(
-                    mel_spect_db, 
-                    ((0, 0), (0, self.max_length - mel_spect_db.shape[1])), 
-                    mode='constant'
-                )
+            # Pad or trim to fixed length (exactly as in original code)
+            if mfccs.shape[1] < self.max_length:
+                mfccs = np.pad(mfccs, ((0, 0), (0, self.max_length - mfccs.shape[1])), mode='constant')
             else:
-                mel_spect_db = mel_spect_db[:, :self.max_length]
+                mfccs = mfccs[:, :self.max_length]
             
-            # Reshape for model input (batch_size, height, width, channels)
-            features = mel_spect_db.reshape(1, mel_spect_db.shape[0], mel_spect_db.shape[1], 1)
+            # Reshape for model input (exactly as in original code)
+            features = mfccs.reshape(1, self.n_mfcc, self.max_length, 1)
             
             # Print shape for debugging
             print(f"Input shape: {features.shape}")
@@ -93,7 +64,7 @@ class AudioDeepfakeDetector:
             # Predict using the model
             prediction = self.model.predict(features, verbose=0)
             
-            # Determine result and confidence
+            # Determine result using same threshold as original code
             is_fake = bool(prediction[0][0] > 0.6)
             confidence = float(prediction[0][0] if is_fake else 1 - prediction[0][0]) * 100
 
@@ -105,7 +76,7 @@ class AudioDeepfakeDetector:
                 'confidence': confidence,
                 'duration': duration,
                 'sample_rate': self.target_sr,
-                'input_shape': features.shape[1:].tolist()  # Log input shape for debugging
+                'input_shape': features.shape[1:].tolist()
             }
 
             print(f"Audio analysis complete. Result: {result['result']} with {result['confidence']:.2f}% confidence")
