@@ -107,15 +107,24 @@ def analyze_image(request):
     try:
         uploaded_file = request.FILES['file']
         
+        # Get file extension
+        file_ext = os.path.splitext(uploaded_file.name)[1].lower()
+        
         # Validate file type
-        allowed_types = ['image/jpeg', 'image/png', 'image/jpg']
-        if uploaded_file.content_type not in allowed_types:
+        allowed_extensions = ['.jpg', '.jpeg', '.png']
+        if file_ext not in allowed_extensions:
             return JsonResponse({
-                'error': f'Invalid file type. Allowed types: {", ".join(allowed_types)}'
+                'error': f'Invalid file type. Allowed types: {", ".join(allowed_extensions)}'
             }, status=400)
 
-        # Save file
-        file_path = save_uploaded_file(uploaded_file)
+        # Create temp directory if it doesn't exist
+        os.makedirs(os.path.join(settings.MEDIA_ROOT, 'temp'), exist_ok=True)
+
+        # Save file with proper extension
+        file_path = os.path.join(settings.MEDIA_ROOT, 'temp', f'temp_image{file_ext}')
+        with open(file_path, 'wb+') as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
 
         # Analyze image
         result = image_detector.predict(file_path)

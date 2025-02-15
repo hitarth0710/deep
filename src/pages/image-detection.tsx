@@ -19,11 +19,23 @@ export default function ImageDetection() {
   const [result, setResult] = useState<{
     result?: "REAL" | "FAKE";
     confidence?: number;
+    face_detected?: boolean;
+    image_size?: [number, number, number];
   }>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Create preview URL when file is selected
+  useEffect(() => {
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [file]);
 
   const handleAnalyze = async () => {
     if (!user) {
@@ -43,14 +55,28 @@ export default function ImageDetection() {
       setResult(null);
 
       // Send to backend
-      const response = await api.analyzeImage(file);
+      const response = await api.analyzeImage(file, (progress) => {
+        setProgress(progress);
+      });
+
       setResult(response);
+
+      // Show success toast
+      toast({
+        title: `Image Analysis Complete`,
+        description: `Result: ${response.result} (${response.confidence.toFixed(1)}% confidence)`,
+        variant: response.result === "FAKE" ? "destructive" : "default",
+      });
     } catch (error) {
       console.error("Analysis failed:", error);
-      alert(error instanceof Error ? error.message : "Analysis failed");
+      toast({
+        title: "Analysis Failed",
+        description:
+          error instanceof Error ? error.message : "Failed to analyze image",
+        variant: "destructive",
+      });
     } finally {
       setAnalyzing(false);
-      setProgress(100);
     }
   };
 
@@ -102,49 +128,87 @@ export default function ImageDetection() {
 
           {/* Results */}
           {result && (
-            <Card className="p-6">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Analysis Results</h3>
-                  <Badge
-                    variant={
-                      result.result === "FAKE" ? "destructive" : "default"
-                    }
-                    className="text-sm"
-                  >
-                    {result.result === "FAKE" ? (
-                      <>
-                        <AlertCircle className="w-4 h-4 mr-1" />
-                        AI Generated Image
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-4 h-4 mr-1" />
-                        Natural Image
-                      </>
-                    )}
-                  </Badge>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      Confidence Score
-                    </span>
-                    <span>{result.confidence?.toFixed(1)}%</span>
+            <div className="space-y-6">
+              {/* Image Preview */}
+              {previewUrl && (
+                <Card className="p-4">
+                  <div className="aspect-video relative rounded-lg overflow-hidden bg-black">
+                    <img
+                      src={previewUrl}
+                      alt="Analyzed image"
+                      className="w-full h-full object-contain"
+                    />
                   </div>
-                  <Progress
-                    value={result.confidence}
-                    className={
-                      result.result === "FAKE" ? "bg-destructive/20" : ""
-                    }
-                    indicatorClassName={
-                      result.result === "FAKE" ? "bg-destructive" : ""
-                    }
-                  />
+                </Card>
+              )}
+
+              {/* Analysis Results */}
+              <Card className="p-6">
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Analysis Results</h3>
+                    <Badge
+                      variant={
+                        result.result === "FAKE" ? "destructive" : "default"
+                      }
+                      className="text-sm"
+                    >
+                      {result.result === "FAKE" ? (
+                        <>
+                          <AlertCircle className="w-4 h-4 mr-1" />
+                          AI Generated Image
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 mr-1" />
+                          Natural Image
+                        </>
+                      )}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Confidence Score
+                      </span>
+                      <span>{result.confidence?.toFixed(1)}%</span>
+                    </div>
+                    <Progress
+                      value={result.confidence}
+                      className={
+                        result.result === "FAKE" ? "bg-destructive/20" : ""
+                      }
+                      indicatorClassName={
+                        result.result === "FAKE" ? "bg-destructive" : ""
+                      }
+                    />
+                  </div>
+
+                  {/* Additional Details */}
+                  <div className="grid grid-cols-2 gap-4 pt-4">
+                    <div className="space-y-2">
+                      <div className="text-sm text-muted-foreground">
+                        Face Detection
+                      </div>
+                      <div className="text-2xl font-bold">
+                        {result.face_detected ? "Detected" : "Not Found"}
+                      </div>
+                    </div>
+                    {result.image_size && (
+                      <div className="space-y-2">
+                        <div className="text-sm text-muted-foreground">
+                          Image Size
+                        </div>
+                        <div className="text-sm">
+                          {result.image_size[1]}x{result.image_size[0]} pixels
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            </div>
           )}
         </div>
       </div>
