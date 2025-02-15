@@ -5,7 +5,7 @@ from tensorflow.keras.models import load_model
 from mtcnn import MTCNN
 
 class ImageDeepfakeDetector:
-    def __init__(self, model_path='ml_app/models/image_model.h5'):
+    def __init__(self, model_path='ml_app/models/cnn_model.h5'):
         print("Initializing Image Deepfake Detector...")
         try:
             self.model = self.load_model(model_path)
@@ -30,11 +30,11 @@ class ImageDeepfakeDetector:
             print(f"Error loading model: {str(e)}")
             raise
 
-    def detect_and_crop_face(self, img):
+    def detect_and_crop_face(self, image):
         try:
             # Convert BGR to RGB for MTCNN
-            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            results = self.detector.detect_faces(img_rgb)
+            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            results = self.detector.detect_faces(image_rgb)
             
             if results:
                 bounding_box = results[0]['box']
@@ -43,28 +43,28 @@ class ImageDeepfakeDetector:
                 padding = int(min(width, height) * 0.1)
                 x = max(0, x - padding)
                 y = max(0, y - padding)
-                width = min(img.shape[1] - x, width + 2*padding)
-                height = min(img.shape[0] - y, height + 2*padding)
+                width = min(image.shape[1] - x, width + 2*padding)
+                height = min(image.shape[0] - y, height + 2*padding)
                 
-                face = img[y:y+height, x:x+width]
+                face = image[y:y+height, x:x+width]
                 face = cv2.resize(face, self.target_size)
                 return face, True
             else:
-                return cv2.resize(img, self.target_size), False
+                return cv2.resize(image, self.target_size), False
 
         except Exception as e:
             print(f"Error detecting face: {str(e)}")
-            return cv2.resize(img, self.target_size), False
+            return cv2.resize(image, self.target_size), False
 
-    def preprocess_image(self, img):
+    def preprocess_image(self, image):
         try:
             # Convert BGR to RGB
-            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             # Normalize pixel values
-            img_norm = img_rgb.astype('float32') / 255.0
+            image_norm = image_rgb.astype('float32') / 255.0
             # Add batch dimension
-            img_batch = np.expand_dims(img_norm, axis=0)
-            return img_batch
+            image_batch = np.expand_dims(image_norm, axis=0)
+            return image_batch
 
         except Exception as e:
             print(f"Error preprocessing image: {str(e)}")
@@ -73,28 +73,28 @@ class ImageDeepfakeDetector:
     def predict(self, image_path):
         try:
             print(f"Starting image analysis for {image_path}")
-            # Read image
-            img = cv2.imread(image_path)
-            if img is None:
-                raise ValueError("Could not read image file")
+            # Validate file exists
+            if not os.path.exists(image_path):
+                raise FileNotFoundError(f"Image file not found: {image_path}")
 
-            # Get original image size
-            height, width, channels = img.shape
+            # Read image
+            image = cv2.imread(image_path)
+            if image is None:
+                raise ValueError("Failed to read image file")
+
+            # Get image size
+            height, width, channels = image.shape
 
             # Detect and crop face
-            face, face_detected = self.detect_and_crop_face(img)
-            
-            # Preprocess face
-            processed_face = self.preprocess_image(face)
-            
+            face, face_detected = self.detect_and_crop_face(image)
+
+            # Preprocess image
+            processed_image = self.preprocess_image(face)
+
             # Get prediction
-            prediction = self.model.predict(processed_face, verbose=0)
-            
-            # Process prediction
-            if isinstance(prediction, list):
-                prediction = prediction[0]
-            prediction = prediction[0] if len(prediction.shape) > 1 else prediction
-            
+            prediction = self.model.predict(processed_image, verbose=0)
+            prediction = prediction[0] if isinstance(prediction, list) else prediction[0][0]
+
             # Determine result
             is_fake = bool(prediction >= 0.5)
             confidence = float(prediction if is_fake else 1 - prediction) * 100
