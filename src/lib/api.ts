@@ -41,43 +41,6 @@ export const api = {
     }
   },
 
-  async analyzeAudio(file: File, onProgress?: (progress: number) => void) {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const response = await axios.post(config.endpoints.audio, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        onUploadProgress: (progressEvent) => {
-          if (onProgress && progressEvent.total) {
-            const percentCompleted = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total,
-            );
-            onProgress(percentCompleted);
-          }
-        },
-      });
-
-      const data = response.data;
-
-      return {
-        result: data.result as "REAL" | "FAKE",
-        confidence: parseFloat(data.confidence.toFixed(2)),
-        filename: data.filename,
-        waveform_data: data.waveform_data,
-        spectral_features: data.spectral_features,
-        segments_analyzed: data.segments_analyzed,
-      };
-    } catch (error) {
-      console.error("Error analyzing audio:", error);
-      throw new Error(
-        error instanceof Error ? error.message : "Failed to analyze audio",
-      );
-    }
-  },
-
   async analyzeImage(file: File, onProgress?: (progress: number) => void) {
     const formData = new FormData();
     formData.append("file", file);

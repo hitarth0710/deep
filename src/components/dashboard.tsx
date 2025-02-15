@@ -34,15 +34,6 @@ export default function Dashboard() {
       acceptedTypes: ["video"],
     },
     {
-      title: "Audio Analysis",
-      description: "Detect AI-generated voices and audio deepfakes",
-      icon: FileAudio,
-      path: "/audio-detection",
-      color: "bg-green-500/10",
-      textColor: "text-green-500",
-      acceptedTypes: ["audio"],
-    },
-    {
       title: "Image Detection",
       description: "Identify manipulated and AI-generated images",
       icon: Image,

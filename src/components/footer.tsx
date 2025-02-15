@@ -48,13 +48,6 @@ export default function Footer() {
             >
               VIDEO DETECTION
             </Button>
-            <Button
-              variant="link"
-              className="text-sm text-gray-400 hover:text-white p-0 h-auto block"
-              onClick={() => navigate("/analyze-audio")}
-            >
-              AUDIO ANALYSIS
-            </Button>
           </div>
         </div>
       </div>
