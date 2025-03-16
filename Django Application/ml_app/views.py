@@ -5,6 +5,11 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models.detector2 import DeepfakeDetector
 from .models.image_detector import ImageDeepfakeDetector
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from .models.audio_detector import AudioDeepfakeDetector
 
 # Initialize detectors (no model path needed for mock version)
 video_detector = DeepfakeDetector()
