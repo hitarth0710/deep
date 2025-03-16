@@ -6,24 +6,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const teamMembers = [
   {
-    name: "Shivansh Srivastava",
-    role: "Team Leader",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=shivansh",
-  },
-  {
     name: "Hitarth Soni",
-    role: "Backend Developer",
+    role: "Full Stack Developer",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=hitarth",
   },
   {
-    name: "Harshil Vadalia",
-    role: "Designer and ML Work",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=harshil",
-  },
-  {
-    name: "Harsh Kadecha",
+    name: "Jayan Tandel",
     role: "Frontend Developer",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=harsh",
+    avatar:
+      "https://api.dicebear.com/7.x/avataaars/svg?seed=jayan&gender=male&hairColor=black&facialHairChance=100&facialHairType=beardMedium",
   },
 ];
 

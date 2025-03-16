@@ -25,18 +25,8 @@ import { AuthCheck } from "./auth/AuthCheck";
 
 const teamMembers = [
   {
-    name: "Shivansh Srivastava",
-    role: "Team Leader",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=shivansh",
-    social: {
-      twitter: "https://twitter.com",
-      linkedin: "https://linkedin.com",
-      github: "https://github.com/ShivanshSrivastava136",
-    },
-  },
-  {
     name: "Hitarth Soni",
-    role: "Backend Developer",
+    role: "Full Stack Developer",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=hitarth",
     social: {
       twitter: "https://twitter.com",
@@ -45,23 +35,14 @@ const teamMembers = [
     },
   },
   {
-    name: "Harshil Vadalia",
-    role: "Designer and ML Work",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=harshil",
-    social: {
-      twitter: "https://twitter.com",
-      linkedin: "https://linkedin.com",
-      github: "https://github.com/harshilvadalia",
-    },
-  },
-  {
-    name: "Harsh Kadecha",
+    name: "Jayan Tandel",
     role: "Frontend Developer",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=harsh",
+    avatar:
+      "https://api.dicebear.com/7.x/avataaars/svg?seed=jayan&gender=male&hairColor=black&facialHairChance=100&facialHairType=beardMedium",
     social: {
       twitter: "https://twitter.com",
       linkedin: "https://linkedin.com",
-      github: "https://github.com/HarshKadecha11",
+      github: "https://github.com",
     },
   },
 ];

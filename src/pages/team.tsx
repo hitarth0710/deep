@@ -5,19 +5,8 @@ import { Github, Twitter, Linkedin } from "lucide-react";
 
 const teamMembers = [
   {
-    name: "Shivansh Srivastava",
-    role: "Team Leader",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=shivansh",
-    bio: "Leading the vision and development of MaskOff's deepfake detection technology.",
-    social: {
-      twitter: "https://twitter.com",
-      linkedin: "https://linkedin.com",
-      github: "https://github.com/ShivanshSrivastava136",
-    },
-  },
-  {
     name: "Hitarth Soni",
-    role: "Backend Developer",
+    role: "Full Stack Developer",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=hitarth",
     bio: "Architecting robust backend systems and AI integration pipelines.",
     social: {
@@ -27,25 +16,15 @@ const teamMembers = [
     },
   },
   {
-    name: "Harshil Vadalia",
-    role: "Designer and ML Work",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=harshil",
-    bio: "Creating intuitive user experiences and implementing ML models.",
-    social: {
-      twitter: "https://twitter.com",
-      linkedin: "https://linkedin.com",
-      github: "https://github.com/harshilvadalia",
-    },
-  },
-  {
-    name: "Harsh Kadecha",
+    name: "Jayan Tandel",
     role: "Frontend Developer",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=harsh",
-    bio: "Building responsive and engaging user interfaces with modern web technologies.",
+    avatar:
+      "https://api.dicebear.com/7.x/avataaars/svg?seed=jayan&gender=male&hairColor=black&facialHairChance=100&facialHairType=beardMedium",
+    bio: "Creating intuitive and responsive user interfaces with modern web technologies.",
     social: {
       twitter: "https://twitter.com",
       linkedin: "https://linkedin.com",
-      github: "https://github.com/HarshKadecha11",
+      github: "https://github.com",
     },
   },
 ];
