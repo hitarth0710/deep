@@ -16,7 +16,7 @@ const teamMembers = [
     },
   },
   {
-    name: "Jayan Tandel",
+    name: "Shivansh Srivastava",
     role: "Frontend Developer",
     avatar:
       "https://api.dicebear.com/7.x/avataaars/svg?seed=jayan&gender=male&hairColor=black&facialHairChance=100&facialHairType=beardMedium",
