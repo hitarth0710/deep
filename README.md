@@ -189,5 +189,3 @@ Created by [hitarth0710](https://github.com/hitarth0710) with contributions from
 - [Harsh Kadecha](https://github.com/HarshKadecha11) - ML model implementation
 - [Harshil Vadalia](https://github.com/harshilvadalia) - Frontend architecture
 - [Shivansh Srivantava](https://github.com/ShivanshSrivastava136) - Backend development
-
-Last updated: 2025-04-19
